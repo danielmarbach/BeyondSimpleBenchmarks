@@ -19,6 +19,40 @@ Understanding how to create benchmarks is the tip of the iceberg. In this talk, 
 - Present a few best practices of benchmarking while talking about these concrete examples
 - How do I avoid getting too much into profilers?
 
+## Introduction
+
+- Talk about the struggle of getting my first benchmarks right
+- Talk about the time it takes both in writing and executing them
+- The rinse and repeat until the lights go out
+- Talk about the importance of verifying optimizations
+
+## NServiceBus Pipeline
+
+- NServiceBus with Azure Service Bus and a saga
+- Talk about all the moving parts involved such as transport in/out, DI container, serializer, persistence, pipeline, logging, tracing...
+- Zoom in into the pipeline because it is the centerpiece that keeps things together
+- [First iteration](https://github.com/Particular/NServiceBus/pull/4125)
+- [Second iteration](https://github.com/Particular/NServiceBus/pull/6237)
+- [Third iteration](https://github.com/Particular/NServiceBus/pull/6394)
+- Show how to profile the pipeline?
+
+## Benchmark Pipeline (First iteration)
+
+- Explain isolation of the various moving pieces
+- Talk a bit about the before and after pattern
+- Talk about the cycle of improve, measure, improve
+- Various settings like ShortRuns, DryRuns and some best practices
+
+## Benchmark Pipeline (Second iteration)
+
+- Show how we can iteratively improve things with this approach
+
+## Talk about getting lower on the stack
+
+- Transport Azure Service Bus
+- AMQP
+- Show how we can do various micro optimization that have a compounding effect until we reach the point of redesigning (example body refactoring)
+
 ## Interesting further reading material
 
 - [Intro to Benchmark.net - How To Benchmark C# Code](https://www.youtube.com/watch?v=mmza9x3QxYE)
