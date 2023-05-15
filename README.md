@@ -53,6 +53,19 @@ Understanding how to create benchmarks is the tip of the iceberg. In this talk, 
 - AMQP
 - Show how we can do various micro optimization that have a compounding effect until we reach the point of redesigning (example body refactoring)
 
+## Azure Service Bus SDK
+
+- Show some of the body optimization benchmarks (example https://github.com/danielmarbach/MicroBenchmarks/tree/master/MicroBenchmarks/ServiceBus) and the high level view shown in https://github.com/Azure/azure-sdk-for-net/pull/19996#issuecomment-812663407
+
+## AMQP Level
+
+- If possible to down to that level to talk about encoding optimizations (see https://github.com/danielmarbach/azure-amqp-benchmarks)
+
+## Recap
+
+- Recap the process of "putting a practical process in-place to isolate components, measure + change + measure again, without breaking current behavior. Rinse and repeat"
+- Recap some of the Benchmark.NET rules but point for more information to the microbenchmark design guidelines
+
 ## Interesting further reading material
 
 - [Intro to Benchmark.net - How To Benchmark C# Code](https://www.youtube.com/watch?v=mmza9x3QxYE)
