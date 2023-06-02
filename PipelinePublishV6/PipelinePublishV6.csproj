@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
     <PropertyGroup>
-        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
         <ProjectGuid>{7AA11012-A0C2-417D-B22E-B123DBF17947}</ProjectGuid>
         <OutputType>Exe</OutputType>
@@ -34,7 +34,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="NServiceBus.Core, Version=6.0.0.0, Culture=neutral, PublicKeyToken=9fc386479f8a226c, processorArchitecture=MSIL">
-          <HintPath>..\packages\NServiceBus.6.0.0-beta0007\lib\net452\NServiceBus.Core.dll</HintPath>
+          <HintPath>packages\NServiceBus.6.0.0-beta0007\lib\net452\NServiceBus.Core.dll</HintPath>
         </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
