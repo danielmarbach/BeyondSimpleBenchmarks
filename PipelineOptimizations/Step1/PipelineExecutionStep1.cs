@@ -3,7 +3,7 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Jobs;
-using PipelineOptimizations.Pipeline;
+using NServiceBus.Pipeline;
 
 namespace PipelineOptimizations;
 
@@ -26,9 +26,9 @@ public class PipelineExecutionStep1
 
     private BehaviorContext behaviorContext;
     private PipelineModifications pipelineModificationsBeforeOptimizations;
-    private PipelineModifications pipelineModificationsAfterOptimizationsWithUnsafe;
+    private PipelineModifications pipelineModificationsAfterOptimizations;
     private BaseLinePipeline<IBehaviorContext> pipelineBeforeOptimizations;
-    private PipelineAfterOptimizationsUnsafeAndMemoryMarshal<IBehaviorContext> pipelineAfterOptimizationsWithUnsafe;
+    private PipelineStep1Optimization<IBehaviorContext> pipelineAfterOptimizations;
 
     [GlobalSetup]
     public void SetUp()
@@ -42,20 +42,32 @@ public class PipelineExecutionStep1
                 typeof(BaseLineBehavior), i.ToString(), b => new BaseLineBehavior()));
         }
 
-        pipelineModificationsAfterOptimizationsWithUnsafe = new PipelineModifications();
+        pipelineModificationsAfterOptimizations = new PipelineModifications();
         for (int i = 0; i < PipelineDepth; i++)
         {
-            pipelineModificationsAfterOptimizationsWithUnsafe.Additions.Add(RegisterStep.Create(i.ToString(),
-                typeof(Behavior1AfterOptimization), i.ToString(), b => new Behavior1AfterOptimization()));
+            pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
+                typeof(BehaviorStep1Optimization), i.ToString(), b => new BehaviorStep1Optimization()));
         }
 
         pipelineBeforeOptimizations = new BaseLinePipeline<IBehaviorContext>(null, new SettingsHolder(),
             pipelineModificationsBeforeOptimizations);
-        pipelineAfterOptimizationsWithUnsafe = new PipelineAfterOptimizationsUnsafeAndMemoryMarshal<IBehaviorContext>(null, new SettingsHolder(),
-            pipelineModificationsAfterOptimizationsWithUnsafe);
+        pipelineAfterOptimizations = new PipelineStep1Optimization<IBehaviorContext>(null, new SettingsHolder(),
+            pipelineModificationsAfterOptimizations);
 
         // warmup and cache
         pipelineBeforeOptimizations.Invoke(behaviorContext).GetAwaiter().GetResult();
-        pipelineAfterOptimizationsWithUnsafe.Invoke(behaviorContext).GetAwaiter().GetResult();
+        pipelineAfterOptimizations.Invoke(behaviorContext).GetAwaiter().GetResult();
+    }
+
+    [Benchmark(Baseline = true)]
+    public Task Before()
+    {
+        return pipelineBeforeOptimizations.Invoke(behaviorContext);
+    }
+
+    [Benchmark]
+    public Task After()
+    {
+        return pipelineAfterOptimizations.Invoke(behaviorContext);
     }
 }

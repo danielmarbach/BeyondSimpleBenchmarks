@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNEt" Version="0.13.5" />
+    <PackageReference Include="FastExpressionCompiler" Version="3.3.4" />
   </ItemGroup>
 
 </Project>

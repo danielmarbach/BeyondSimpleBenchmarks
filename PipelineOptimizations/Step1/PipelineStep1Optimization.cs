@@ -1,4 +1,4 @@
-using PipelineOptimizations.Pipeline;
+using NServiceBus.Pipeline;
 
 namespace PipelineOptimizations;
 
