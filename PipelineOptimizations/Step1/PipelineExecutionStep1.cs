@@ -10,13 +10,12 @@ namespace PipelineOptimizations;
 [Config(typeof(Config))]
 public class PipelineExecutionStep1
 {
-    private class Config : ManualConfig
+    class Config : ManualConfig
     {
         public Config()
         {
-            AddExporter(MarkdownExporter.GitHub);
             AddDiagnoser(MemoryDiagnoser.Default);
-            AddJob(Job.Default);
+            AddJob(Job.ShortRun);
         }
     }
 
@@ -53,10 +52,6 @@ public class PipelineExecutionStep1
             pipelineModificationsBeforeOptimizations);
         pipelineAfterOptimizations = new PipelineStep1Optimization<IBehaviorContext>(null, new SettingsHolder(),
             pipelineModificationsAfterOptimizations);
-
-        // warmup and cache
-        pipelineBeforeOptimizations.Invoke(behaviorContext).GetAwaiter().GetResult();
-        pipelineAfterOptimizations.Invoke(behaviorContext).GetAwaiter().GetResult();
     }
 
     [Benchmark(Baseline = true)]
