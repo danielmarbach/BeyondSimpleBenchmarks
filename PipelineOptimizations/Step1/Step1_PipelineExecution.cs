@@ -7,7 +7,6 @@ using NServiceBus.Pipeline;
 namespace PipelineOptimizations.Step1;
 
 [Config(typeof(Config))]
-[BenchmarkCategory("Step1")]
 public class Step1_PipelineExecution
 {
     class Config : ManualConfig
@@ -55,14 +54,14 @@ public class Step1_PipelineExecution
     }
 
     [Benchmark(Baseline = true)]
-    public Task Before()
+    public async Task Before()
     {
-        return pipelineBeforeOptimizations.Invoke(behaviorContext);
+        await pipelineBeforeOptimizations.Invoke(behaviorContext);
     }
 
     [Benchmark]
-    public Task After()
+    public async Task After()
     {
-        return pipelineAfterOptimizations.Invoke(behaviorContext);
+        await pipelineAfterOptimizations.Invoke(behaviorContext);
     }
 }
