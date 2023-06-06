@@ -3,12 +3,11 @@ using System.Reflection;
 using FastExpressionCompiler;
 using NServiceBus.Pipeline;
 
-namespace PipelineOptimizations.Step1;
+namespace PipelineOptimizations.Step2;
 
 static class BehaviorExtensions
 {
-    // ReSharper disable once SuggestBaseTypeForParameter
-    public static Func<TRootContext, Task> CreatePipelineExecutionFuncFor<TRootContext>(this IBehavior[] behaviors, List<Expression> expressions = null)
+    public static Func<TRootContext, Task> CreatePipelineExecutionFuncWithSmugglingFor<TRootContext>(this IBehavior[] behaviors)
         where TRootContext : IBehaviorContext
     {
         return (Func<TRootContext, Task>)behaviors.CreatePipelineExecutionExpression();
@@ -43,7 +42,7 @@ static class BehaviorExtensions
 
             var genericArguments = behaviorInterfaceType.GetGenericArguments();
             var inContextType = genericArguments[0];
-
+                
             var inContextParameter = Expression.Parameter(inContextType, $"context{i}");
 
             if (i == length)
@@ -53,24 +52,28 @@ static class BehaviorExtensions
                     inContextType = typeof(PipelineTerminator<>.ITerminatingContext).MakeGenericType(inContextType);
                 }
                 var doneDelegate = CreateDoneDelegate(inContextType, i);
-                lambdaExpression = CreateBehaviorCallDelegate(currentBehavior, methodInfo, inContextParameter, doneDelegate, expressions);
+                lambdaExpression = CreateBehaviorCallDelegate(methodInfo, inContextParameter, currentBehavior.GetType(), doneDelegate, i, expressions);
                 continue;
             }
 
-            lambdaExpression = CreateBehaviorCallDelegate(currentBehavior, methodInfo, inContextParameter, lambdaExpression, expressions);
+            lambdaExpression = CreateBehaviorCallDelegate(methodInfo, inContextParameter, currentBehavior.GetType(), lambdaExpression, i, expressions);
         }
 
         return lambdaExpression;
     }
 
-    // ReSharper disable once SuggestBaseTypeForParameter
-
     /// <code>
     /// context{i} => behavior.Invoke(context{i}, context{i+1} => previous)
     /// </code>>
-    static Delegate CreateBehaviorCallDelegate(IBehavior currentBehavior, MethodInfo methodInfo, ParameterExpression outerContextParam, Delegate previous, List<Expression> expressions = null)
+    static Delegate CreateBehaviorCallDelegate(MethodInfo methodInfo, ParameterExpression outerContextParam, Type behaviorType, Delegate previous, int i, List<Expression> expressions = null)
     {
-        Expression body = Expression.Call(Expression.Constant(currentBehavior), methodInfo, outerContextParam, Expression.Constant(previous));
+        PropertyInfo extensionProperty = typeof(IExtendable).GetProperty("Extensions");
+        Expression extensionPropertyExpression = Expression.Property(outerContextParam, extensionProperty);
+        PropertyInfo behaviorsProperty = typeof(ContextBag).GetProperty("Behaviors", BindingFlags.Instance | BindingFlags.NonPublic);
+        Expression behaviorsPropertyExpression = Expression.Property(extensionPropertyExpression, behaviorsProperty);
+        Expression indexerPropertyExpression = Expression.ArrayIndex(behaviorsPropertyExpression, Expression.Constant(i));
+        Expression castToBehavior = Expression.Convert(indexerPropertyExpression, behaviorType);
+        Expression body = Expression.Call(castToBehavior, methodInfo, outerContextParam, Expression.Constant(previous));
         var lambdaExpression = Expression.Lambda(body, outerContextParam);
         expressions?.Add(lambdaExpression);
         return lambdaExpression.CompileFast();
@@ -82,6 +85,6 @@ static class BehaviorExtensions
     static Delegate CreateDoneDelegate(Type inContextType, int i)
     {
         var innerContextParam = Expression.Parameter(inContextType, $"context{i + 1}");
-        return Expression.Lambda(typeof(Func<,>).MakeGenericType(inContextType, typeof(Task)), Expression.Constant(Task.CompletedTask), innerContextParam).CompileFast();
+        return Expression.Lambda(Expression.Constant(Task.CompletedTask), innerContextParam).CompileFast();
     }
 }

@@ -1,14 +1,13 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Jobs;
 using NServiceBus.Pipeline;
 
-namespace PipelineOptimizations;
+namespace PipelineOptimizations.Step1;
 
 [Config(typeof(Config))]
-public class PipelineWarmupStep1
+public class Step1_PipelineWarmup
 {
     class Config : ManualConfig
     {
@@ -40,7 +39,7 @@ public class PipelineWarmupStep1
         for (int i = 0; i < PipelineDepth; i++)
         {
             pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
-                typeof(BehaviorStep1Optimization), i.ToString(), b => new BehaviorStep1Optimization()));
+                typeof(BehaviorOptimization), i.ToString(), b => new BehaviorOptimization()));
         }
     }
 
@@ -53,9 +52,9 @@ public class PipelineWarmupStep1
     }
 
     [Benchmark]
-    public PipelineStep1Optimization<IBehaviorContext> After()
+    public PipelineOptimization<IBehaviorContext> After()
     {
-        var pipelineAfterOptimizations = new PipelineStep1Optimization<IBehaviorContext>(null, new SettingsHolder(),
+        var pipelineAfterOptimizations = new PipelineOptimization<IBehaviorContext>(null, new SettingsHolder(),
             pipelineModificationsAfterOptimizations);
         return pipelineAfterOptimizations;
     }

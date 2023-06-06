@@ -1,11 +1,11 @@
 using NServiceBus.Pipeline;
 
-namespace PipelineOptimizations;
+namespace PipelineOptimizations.Step3;
 
-public class PipelineStep1Optimization<TContext>
+public class PipelineOptimization<TContext>
     where TContext : IBehaviorContext
 {
-    public PipelineStep1Optimization(IBuilder builder, ReadOnlySettings settings,
+    public PipelineOptimization(IBuilder builder, ReadOnlySettings settings,
         PipelineModifications pipelineModifications)
     {
         var coordinator = new StepRegistrationsCoordinator(pipelineModifications.Removals,
@@ -20,15 +20,16 @@ public class PipelineStep1Optimization<TContext>
         behaviors = coordinator.BuildPipelineModelFor<TContext>()
             .Select(r => r.CreateBehaviorNew(builder)).ToArray();
 
-        pipeline = behaviors.CreatePipelineExecutionFuncFor<TContext>();
+        pipeline = behaviors.CreatePipelineExecutionFuncWithSmugglingAndUnsafeFor<TContext>();
     }
 
     public Task Invoke(TContext context)
     {
+        context.Extensions.Behaviors = behaviors;
         return pipeline(context);
     }
 
     // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-    IBehavior[] behaviors;
-    Func<TContext, Task> pipeline;
+    readonly IBehavior[] behaviors;
+    readonly Func<TContext, Task> pipeline;
 }

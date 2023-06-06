@@ -1,14 +1,13 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Jobs;
 using NServiceBus.Pipeline;
 
-namespace PipelineOptimizations;
+namespace PipelineOptimizations.Step2;
 
 [Config(typeof(Config))]
-public class PipelineExceptionStep1
+public class Step2_PipelineException
 {
     class Config : ManualConfig
     {
@@ -26,8 +25,8 @@ public class PipelineExceptionStep1
     private BehaviorContext behaviorContext;
     private PipelineModifications pipelineModificationsBeforeOptimizations;
     private PipelineModifications pipelineModificationsAfterOptimizations;
-    private BaseLinePipeline<IBehaviorContext> pipelineBeforeOptimizations;
-    private PipelineStep1Optimization<IBehaviorContext> pipelineAfterOptimizations;
+    private Step1.PipelineOptimization<IBehaviorContext> pipelineBeforeOptimizations;
+    private PipelineOptimization<IBehaviorContext> pipelineAfterOptimizations;
 
     [GlobalSetup]
     public void SetUp()
@@ -38,7 +37,7 @@ public class PipelineExceptionStep1
         for (int i = 0; i < PipelineDepth; i++)
         {
             pipelineModificationsBeforeOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
-                typeof(BaseLineBehavior), i.ToString(), b => new BaseLineBehavior()));
+                typeof(Step1.BehaviorOptimization), i.ToString(), b => new Step1.BehaviorOptimization()));
         }
         var stepdId = PipelineDepth + 1;
         pipelineModificationsBeforeOptimizations.Additions.Add(RegisterStep.Create(stepdId.ToString(), typeof(Throwing), "1", b => new Throwing()));
@@ -47,13 +46,13 @@ public class PipelineExceptionStep1
         for (int i = 0; i < PipelineDepth; i++)
         {
             pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
-                typeof(BehaviorStep1Optimization), i.ToString(), b => new BehaviorStep1Optimization()));
+                typeof(Step1.BehaviorOptimization), i.ToString(), b => new Step1.BehaviorOptimization()));
         }
         pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(stepdId.ToString(), typeof(Throwing), "1", b => new Throwing()));
 
-        pipelineBeforeOptimizations = new BaseLinePipeline<IBehaviorContext>(null, new SettingsHolder(),
+        pipelineBeforeOptimizations = new Step1.PipelineOptimization<IBehaviorContext>(null, new SettingsHolder(),
             pipelineModificationsBeforeOptimizations);
-        pipelineAfterOptimizations = new PipelineStep1Optimization<IBehaviorContext>(null, new SettingsHolder(),
+        pipelineAfterOptimizations = new PipelineOptimization<IBehaviorContext>(null, new SettingsHolder(),
             pipelineModificationsAfterOptimizations);
     }
 

@@ -1,8 +1,8 @@
 using NServiceBus.Pipeline;
 
-namespace PipelineOptimizations;
+namespace PipelineOptimizations.Step1;
 
-public class BehaviorStep1Optimization : IBehavior<IBehaviorContext, IBehaviorContext>
+public class BehaviorOptimization : IBehavior<IBehaviorContext, IBehaviorContext>
 {
     public Task Invoke(IBehaviorContext context, Func<IBehaviorContext, Task> next)
     {
