@@ -8,7 +8,7 @@ using NServiceBus.Pipeline;
 namespace PipelineOptimizations;
 
 [Config(typeof(Config))]
-public class PipelineExecutionStep1
+public class PipelineExceptionStep1
 {
     class Config : ManualConfig
     {
@@ -40,6 +40,8 @@ public class PipelineExecutionStep1
             pipelineModificationsBeforeOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
                 typeof(BaseLineBehavior), i.ToString(), b => new BaseLineBehavior()));
         }
+        var stepdId = PipelineDepth + 1;
+        pipelineModificationsBeforeOptimizations.Additions.Add(RegisterStep.Create(stepdId.ToString(), typeof(Throwing), "1", b => new Throwing()));
 
         pipelineModificationsAfterOptimizations = new PipelineModifications();
         for (int i = 0; i < PipelineDepth; i++)
@@ -47,6 +49,7 @@ public class PipelineExecutionStep1
             pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
                 typeof(BehaviorStep1Optimization), i.ToString(), b => new BehaviorStep1Optimization()));
         }
+        pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(stepdId.ToString(), typeof(Throwing), "1", b => new Throwing()));
 
         pipelineBeforeOptimizations = new BaseLinePipeline<IBehaviorContext>(null, new SettingsHolder(),
             pipelineModificationsBeforeOptimizations);
@@ -55,14 +58,34 @@ public class PipelineExecutionStep1
     }
 
     [Benchmark(Baseline = true)]
-    public Task Before()
+    public async Task Before()
     {
-        return pipelineBeforeOptimizations.Invoke(behaviorContext);
+        try
+        {
+            await pipelineBeforeOptimizations.Invoke(behaviorContext).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException)
+        {
+        }
     }
 
     [Benchmark]
-    public Task After()
+    public async Task After()
     {
-        return pipelineAfterOptimizations.Invoke(behaviorContext);
+        try
+        {
+            await pipelineAfterOptimizations.Invoke(behaviorContext).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+    
+    class Throwing : Behavior<IBehaviorContext>
+    {
+        public override Task Invoke(IBehaviorContext context, Func<Task> next)
+        {
+            throw new InvalidOperationException();
+        }
     }
 }
