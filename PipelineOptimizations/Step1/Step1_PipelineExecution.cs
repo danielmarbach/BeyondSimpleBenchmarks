@@ -15,7 +15,7 @@ public class Step1_PipelineExecution
         public Config()
         {
             AddDiagnoser(MemoryDiagnoser.Default);
-            AddJob(Job.Default);
+            AddJob(Job.ShortRun);
         }
     }
 

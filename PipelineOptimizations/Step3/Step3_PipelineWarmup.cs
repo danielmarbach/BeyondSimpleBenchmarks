@@ -14,7 +14,7 @@ public class Step3_PipelineWarmup
         public Config()
         {
             AddDiagnoser(MemoryDiagnoser.Default);
-            AddJob(Job.Default);
+            AddJob(Job.ShortRun);
         }
     }
 

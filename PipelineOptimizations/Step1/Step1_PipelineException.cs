@@ -14,7 +14,7 @@ public class Step1_PipelineException
         public Config()
         {
             AddDiagnoser(MemoryDiagnoser.Default);
-            AddJob(Job.Default);
+            AddJob(Job.ShortRun);
         }
     }
 
