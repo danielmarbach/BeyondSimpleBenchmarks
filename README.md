@@ -21,10 +21,15 @@ Understanding how to create benchmarks is the tip of the iceberg. In this talk, 
 
 ## Introduction
 
-- Talk about the struggle of getting my first benchmarks right
-- Talk about the time it takes both in writing and executing them
-- The rinse and repeat until the lights go out
-- Talk about the importance of verifying optimizations
+I remember the first time I started benchmarking my code changes to verify whether the things I though might accelerate this code really made an impact. I had already seen quite a few Benchmarks written with Benchmark.NET and felt quite certain it wouldn't take long. Oh, I was wrong. I mean, writing the skeleton of the benchmark was indeed simple. The mind-boggling part was trying to figure out what should be taken into the benchmark, how to isolate the code without a crazy amount of refactoring, what should be deliberately cut away to make sure the changes envisioned are going in the right direction and how to measure, change, and measure without burning away the allotted budget. But why even bother and go through all this hassle?
+
+For code that is executed at scale, the overall throughput and memory characteristics are important. Code that spends unnecessary CPU or memory cycles ends up eating away resources that could be used to serve requests. With modern cloud native approaches, scalable code is even more important than before because often times we are getting billed by the number of resources consumed. The more efficient the code is, the smaller the bill or the more requests we can execute for the same amount of money.
+
+In this talk, I have summarized my personal lessons of how to make performance optimizations actionable. I will show you a practical process to identify some common bottlenecks, isolate components and measure + change + measure without breaking current behavior. Let's not waste more time and get to the essence of this talk
+
+## The performance loop
+
+
 
 ## NServiceBus Pipeline
 
