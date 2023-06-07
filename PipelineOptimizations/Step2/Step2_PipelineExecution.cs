@@ -19,7 +19,7 @@ public class Step2_PipelineExecution
     }
 
 
-    [Params(10)]
+    [Params(10, 20, 40)]
     public int PipelineDepth { get; set; }
 
     private BehaviorContext behaviorContext;
