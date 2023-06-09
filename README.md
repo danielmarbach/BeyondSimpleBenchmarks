@@ -29,6 +29,25 @@ In this talk, I have summarized my personal lessons of how to make performance o
 
 ## The performance loop
 
+For me one of the key principles I try to apply to almost everything in software is making explicit tradeoffs and decisions while we go. This also applies to performance. A reasonably mature team should be "performance aware". My friend Maarten Balliauw once famously said, in some countries you have to be bear aware because for example when you are hiking in Canada it is good to be prepared for the likelihood of a bear crossing your hiking paths, not so much in Switzerland though ;) I digress...
+
+When it comes to be performance, when you are performance aware, it doesn't mean you have to always go all the way in. Not at all. In fact, I always start with the simplest solutions that just works first and get some reasonably well test coverage in place. Once I have a working solution with good coverage, I start asking myself questions like:
+
+- How is this code going to be executed at scale and what would the memory characteristics be (gut feeling)
+- Are there simple low-hanging fruits I can apply to accelerate this code?
+- Are there things I can move away from the hot path by simply restructuring a bit my code?
+- What part is under my control and what isn't really?
+- What optimizations can I apply, and when should I stop?
+
+I have covered some of these nuances in further in my talk "Performance Tricks I learned from contributing to the Azure .NET SDK.". Once I have some better understanding of the context of the code, depending on the outcome, I start applying the following performance loop.
+
+- Write a simple "sample" or harness that makes it possible to observe the component under inspection with a memory profiler and/or a performance profiler. The profiler snapshots give me an indication of the different subsystems at play to make an explicit decision on what to focus and what to ignore.
+- Then I select the hot path, for example, responsible for the majority of allocations or the biggest slowdown (or where I feel I can make a first good enough impact without sinking days and weeks into it). If the code path in question is not well covered, I try to get some tests in place to make sure my tweaks will not break the existing assumptions / behavior => it doesn't help when something is superfast but utterly wrong :)
+- Then I experiment with the changes I have in mind and check whether they pass the tests. Once it functionally works, I put things into a performance harness
+- To save time, I extract the code as good as possible into a dedicated repository and do a series of "short runs" to see if I'm heading into the right direction. Once I'm reasonably happy with the outcome, I do a full job run to verify the before and after.
+- Then I ship this code and focus my attention to other parts
+
+But enough of the overview of the process. Let's dive into a practical example.
 
 
 ## NServiceBus Pipeline
