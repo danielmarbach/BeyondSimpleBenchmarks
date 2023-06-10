@@ -55,7 +55,7 @@ NServiceBus is the heart of a distributed system and the Particular Service Plat
 
 The most critical infrastructure piece inside an NServiceBus endpoint is the NServiceBus pipeline. The pipeline is the engine that makes sure all the required steps involved (serialization, deserialization, transactions, data access...) in sending or receiving messages are executed as efficiently as possible. As such it is crucial for the pipeline to not be in the way of our customers code.
 
-![](PipelinePublishV6/Pipeline.png)
+![](PipelinePublishV6/Pipeline.jpg)
 
 ### Profiling the pipeline
 
