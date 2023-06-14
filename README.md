@@ -90,6 +90,8 @@ Console.WriteLine("Publish 1000 done. Get a snapshot");
 Console.ReadLine();
 ```
 
+The handler code:
+
 ```csharp
 public class MyEventHandler : IHandleMessages<MyEvent>
 {
@@ -101,14 +103,39 @@ public class MyEventHandler : IHandleMessages<MyEvent>
 }
 ```
 
-- NServiceBus with Azure Service Bus and a saga
-- [First iteration](https://github.com/Particular/NServiceBus/pull/4125)
-- [Second iteration](https://github.com/Particular/NServiceBus/pull/6237)
-- [Third iteration](https://github.com/Particular/NServiceBus/pull/6394)
-- Show how to profile the pipeline?
+Let's have a look at the memory pressure of the publish operations.
+
+![](PipelinePublishV6/PipelineV6PublishMemoryOverview.png)
+
+In order to understand the data presented in front of us we require Domain Knowledge of the problem at hand. That knowledge helps to to navigate through the maze of noise we might see. As we can see there are numerous `byte[]`, `MemoryStream` and `StreamWriter` allocations that are quite "hefty".
+
+Before we jump to conclusions let's have a look at the receiving end. That's when the messages are invoking the handler we saw previously.
+
+![](PipelinePublishV6/PipelineV6ReceiveMemoryOverview.png)
+
+Let's of `byte[]`, `XmlTextReaderNodes` and Message extensions allocations.
+
+![](PipelinePublishV6/PipelineV6BehaviorChainZoomIn.png)
+
+The stack trace is also quite larger containing let's of steps that clearly hide the actual pipeline operations like `MutateIncomingTransportMessageBehavior` or `UnitOfWorkBehavior`.
+
+So should we jump trying to optimize those away? Well ideally yes but in this specific case there are a few things we have to take into account:
+
+- The allocations are mostly coming from the MSMQ transport which has a diminishing user base. Most users eventually transition away from MSMQ to either SQL Server, RabbitMQ or a cloud transport like Azure Service Bus or Amazon SQS. Our efforts there might lead to allocation reductions only for a very limited segment of users.
+- Another angle could be that we might not be transport experts. We already know by making iterative gains on this hot path we will end up with great improvements. But since every activity has to be weighted against building features and all the other activities it might not be justifiable right now to ramp up knowledge in that area.
+- Last but not least our goal is to see what we can do to optimize the pipeline. The pipeline optimizations have great benefits for all users indepent of the transports.
+
+When we look at an indiviual invocation (called `Behavior`) we see the following picture:
+
+![](PipelinePublishV6/PipelineV6BehaviorZoomIn.png)
+
+So let's focus on the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehaviorContext, Task>` and `__DisplayClass**` allocations since they are coming from the pipeline invocation. Luckily dotMemory also allows us to filter by namespace to get a better overview.
+
+![](PipelinePublishV6/PipelineV6StageForkAndDisplayClasses.png)
 
 ## Benchmark Pipeline (First iteration)
 
+- [First iteration](https://github.com/Particular/NServiceBus/pull/4125)
 - Explain isolation of the various moving pieces
 - Talk a bit about the before and after pattern
 - Talk about the cycle of improve, measure, improve
@@ -116,7 +143,10 @@ public class MyEventHandler : IHandleMessages<MyEvent>
 
 ## Benchmark Pipeline (Second iteration)
 
+- [Second iteration](https://github.com/Particular/NServiceBus/pull/6237)
 - Show how we can iteratively improve things with this approach
+
+- [Third iteration](https://github.com/Particular/NServiceBus/pull/6394)
 
 ## Talk about getting lower on the stack
 
