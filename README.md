@@ -61,11 +61,47 @@ During the pipeline execution there is a lot that is actually going on. For exam
 
 ### Profiling the pipeline
 
-TBD
+To get a good overview of the problem domain in front of us it is vital to create a sample or harness that allows us to zoom in on the problem space. Since my goal it to optimize the pipeline invocation I can look at the pipeline invocation with a tool like DotTrace from Jetbrains to get a good understanding of of the performance bottlenecks and/or analyze the memory usage by using a tool like DotMemory.
+
+Below is an excerpt of such a harness. The harness sets up NServiceBus with a transport, a serializer and an InMemory persistence (to avoid unnecessary overhead that is currently not our focus). The harness has various points where I can take a snapshot to understand the memory characteristics of whats happening. For example it publishes 1000 events in parallel which are then received in a handler that does nothing.
+
+```csharp
+var endpointConfiguration = new EndpointConfiguration("PublishSample");
+endpointConfiguration.UseSerialization<JsonSerializer>();
+var transport = endpointConfiguration.UseTransport<MsmqTransport>();
+transport.Routing().RegisterPublisher(typeof(MyEvent), "PublishSample");
+endpointConfiguration.UsePersistence<InMemoryPersistence>();
+endpointConfiguration.EnableInstallers();
+endpointConfiguration.SendFailedMessagesTo("error");
+
+var endpointInstance = await Endpoint.Start(endpointConfiguration);
+
+Console.WriteLine("Attach the profiler and hit <enter>.");
+Console.ReadLine();
+
+var tasks = new List<Task>(1000);
+for (int i = 0; i < 1000; i++)
+{
+    tasks.Add(endpointInstance.Publish(new MyEvent()));
+}
+await Task.WhenAll(tasks);
+
+Console.WriteLine("Publish 1000 done. Get a snapshot");
+Console.ReadLine();
+```
+
+```csharp
+public class MyEventHandler : IHandleMessages<MyEvent>
+{
+    public Task Handle(MyEvent message, IMessageHandlerContext context)
+    {
+        Console.WriteLine("Event received");
+        return Task.CompletedTask;
+    }
+}
+```
 
 - NServiceBus with Azure Service Bus and a saga
-- Talk about all the moving parts involved such as transport in/out, DI container, serializer, persistence, pipeline, logging, tracing...
-- Zoom in into the pipeline because it is the centerpiece that keeps things together
 - [First iteration](https://github.com/Particular/NServiceBus/pull/4125)
 - [Second iteration](https://github.com/Particular/NServiceBus/pull/6237)
 - [Third iteration](https://github.com/Particular/NServiceBus/pull/6394)
