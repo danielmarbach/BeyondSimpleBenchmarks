@@ -57,6 +57,8 @@ The most critical infrastructure piece inside an NServiceBus endpoint is the NSe
 
 ![](PipelinePublishV6/Pipeline.jpg)
 
+During the pipeline execution there is a lot that is actually going on. For example for an incoming message the transport (e.g. Azure Service Bus, SQS, MSMQ...) pushes raw data of messages to the pipeline. The pipeline will deserialize the payload. Based on the message type it might resolve infrastructure such as message handlers from the dependency injection container and load data from the persistence selected by the user (e.g CosmosDB, SQL Server, DynamoDB...). There is bits and pieces that creates OpenTelemetry traces, logs and much more. In essence we have to somehow focus on parts that are relevant for us within the context we are optimizing for. We can achieve that by profiling.
+
 ### Profiling the pipeline
 
 TBD
