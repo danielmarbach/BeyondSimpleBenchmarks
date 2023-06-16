@@ -108,7 +108,14 @@ During the pipeline execution there is a lot that is actually going on. For exam
 
 To get a good overview of the problem domain in front of us it is vital to create a sample or harness that allows us to zoom in on the problem space. Since my goal it to optimize the pipeline invocation I can look at the pipeline invocation with a tool like DotTrace from Jetbrains to get a good understanding of of the performance bottlenecks and/or analyze the memory usage by using a tool like DotMemory.
 
-Below is an excerpt of such a harness. The harness sets up NServiceBus with a transport, a serializer and an InMemory persistence (to avoid unnecessary overhead that is currently not our focus). The harness has various points where I can take a snapshot to understand the memory characteristics of whats happening. For example it publishes 1000 events in parallel which are then received in a handler that does nothing.
+Below is an excerpt of such a harness. The harness sets up NServiceBus with a transport, a serializer and an InMemory persistence (to avoid unnecessary overhead that is currently not our focus). The harness has various points where I can take a snapshot to understand the memory characteristics of whats happening. In general such a harness should adhere to the following guidelines:
+
+- Compiled and executed under Release mode
+- The harness should run for at least a few seconds and keep the overhead as small as possible to make sure it does not dominate the profile.
+- It's recommended to disable Tiered JIT (`<TieredCompilation>false</TieredCompilation>`) (to avoid the need of warmup) and emit full symbols (`<DebugType>pdbonly</DebugType` and `<DebugSymbols>true</DebugSymbols>`) (not enabled by default for Release builds)
+
+
+For example it publishes 1000 events in parallel which are then received in a handler that does nothing.
 
 ```csharp
 var endpointConfiguration = new EndpointConfiguration("PublishSample");
@@ -158,7 +165,7 @@ Before we jump to conclusions let's have a look at the receiving end. That's whe
 
 ![Pipeline receive memory overview](PipelinePublishV6/PipelineV6ReceiveMemoryOverview.png)
 
-Let's of `byte[]`, `XmlTextReaderNodes` and Message extensions allocations.
+Lots of `byte[]`, `XmlTextReaderNodes` and Message extensions allocations.
 
 ![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6BehaviorChainZoomIn.png)
 
@@ -177,6 +184,47 @@ When we look at an indiviual invocation (called `Behavior`) we see the following
 So let's focus on the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehaviorContext, Task>` and `__DisplayClass**` allocations since they are coming from the pipeline invocation. Luckily dotMemory also allows us to filter by namespace to get a better overview.
 
 ![Display class allocations in pipeline](PipelinePublishV6/PipelineV6StageForkAndDisplayClasses.png)
+
+## Testing the pipeline
+
+Luckily there were existing acceptance tests in place. Those acceptance tests are executing whole NServiceBus scenarios end to end. So if anything would break while modifying the pipeline it should be immediately captured by those tests. At the time I added a few additional tests that I wouldn't call it Unit Test but more a component test that verifies more than just a single class.
+
+![Basic tests](PipelineOptimizations/PipelineTests.png)
+
+## Improving the pipeline
+
+Before I even started profiling the changes and trying to compare it I started making some improvements to the code there are not really relevant for this talk. In case you are interested what I did you can read these blog posts on the particular blog:
+
+- [10X faster execution with compiled expression trees](https://particular.net/blog/10x-faster-execution-with-compiled-expression-trees)
+- [How we achieved 5X faster pipeline execution by removing closure allocations](https://particular.net/blog/pipeline-and-closure-allocations)
+
+In essence I applied a bunch of memory allocation optimization tricks that removed all of the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehaviorContext, Task>` and `__DisplayClass**` allocations mentioned previously.
+
+TODO: Maybe move this section below to later?
+
+Let's have a look at the memory pressure of the publish operations.
+
+![Pipeline publish memory overview](PipelinePublishV6/PipelineV6PublishMemoryOverviewOptimized.png)
+
+![Pipeline receive memory overview](PipelinePublishV6/PipelineV6ReceiveMemoryOverviewOptimized.png)
+
+![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6BehaviorChainZoomInOptimized.png)
+
+![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6StageForkAndDisplayClassesOptimized.png)
+
+## Benchmarking the pipeline
+
+TBD
+
+## Preventing regressions
+
+The goal here was to show an approach that has worked well for me for a long time even before the tooling matured. Once you have established a performance culture it would be possible to go even a step further. Preventing regressions is a fundamental part of a good performance culture. The cheapest regression is one that does not get into the product.
+
+With the help of the guidance in [Preventing Regressions](https://github.com/dotnet/performance/blob/main/docs/benchmarking-workflow-dotnet-runtime.md) and the [ResultComparer](https://github.com/dotnet/performance/blob/main/src/tools/ResultsComparer/README.md) tool it is possible to execute benchmarks against the baseline version of the code, storing the artifacts in a dedicated folder (example `before`), foward the repository history to the optimized versions, build in release mode and execute the same benchmark again but this time storing the results into another folder (example `after`) and then compare them
+
+```bash
+C:\Projects\performance\src\tools\ResultsComparer> dotnet run --base "C:\results\before" --diff "C:\results\after" --threshold 2%
+```
 
 ## Benchmark Pipeline (First iteration)
 
