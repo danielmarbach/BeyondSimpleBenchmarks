@@ -4,7 +4,7 @@ It is vital for code executed at scale to perform well. It is crucial to ensure 
 
 In most systems, the code we need to optimize is rarely simple. It contains assumptions we need to discover before we even know what to improve. The code is hard to isolate. It has dependencies, which may or may not be relevant to optimization. And even when we've decided what to optimize, it's hard to reliably benchmark the before and after. Only measurement can tell us if our changes actually make things faster. Without them, we could even make things slower, without even realizing.
 
-Understanding how to create benchmarks is the tip of the iceberg. In this talk, you'll also learn how to identify what to change, how to isolate code for benchmarking, and more. You'll leave with a toolkit of succinct techniques and the confidence to go ahead and optimize your code. 
+Understanding how to create benchmarks is the tip of the iceberg. In this talk, you'll also learn how to identify what to change, how to isolate code for benchmarking, and more. You'll leave with a toolkit of succinct techniques and the confidence to go ahead and optimize your code.
 
 ## Brainstorming
 
@@ -55,7 +55,7 @@ NServiceBus is the heart of a distributed system and the Particular Service Plat
 
 The most critical infrastructure piece inside an NServiceBus endpoint is the NServiceBus pipeline. The pipeline is the engine that makes sure all the required steps involved (serialization, deserialization, transactions, data access...) in sending or receiving messages are executed as efficiently as possible. As such it is crucial for the pipeline to not be in the way of our customers code.
 
-![](PipelinePublishV6/Pipeline.jpg)
+![NServiceBus Pipeline Overview](PipelinePublishV6/Pipeline.jpg)
 
 During the pipeline execution there is a lot that is actually going on. For example for an incoming message the transport (e.g. Azure Service Bus, SQS, MSMQ...) pushes raw data of messages to the pipeline. The pipeline will deserialize the payload. Based on the message type it might resolve infrastructure such as message handlers from the dependency injection container and load data from the persistence selected by the user (e.g CosmosDB, SQL Server, DynamoDB...). There is bits and pieces that creates OpenTelemetry traces, logs and much more. In essence we have to somehow focus on parts that are relevant for us within the context we are optimizing for. We can achieve that by profiling.
 
@@ -105,17 +105,17 @@ public class MyEventHandler : IHandleMessages<MyEvent>
 
 Let's have a look at the memory pressure of the publish operations.
 
-![](PipelinePublishV6/PipelineV6PublishMemoryOverview.png)
+![Pipeline publish memory overview](PipelinePublishV6/PipelineV6PublishMemoryOverview.png)
 
 In order to understand the data presented in front of us we require Domain Knowledge of the problem at hand. That knowledge helps to to navigate through the maze of noise we might see. As we can see there are numerous `byte[]`, `MemoryStream` and `StreamWriter` allocations that are quite "hefty".
 
 Before we jump to conclusions let's have a look at the receiving end. That's when the messages are invoking the handler we saw previously.
 
-![](PipelinePublishV6/PipelineV6ReceiveMemoryOverview.png)
+![Pipeline receive memory overview](PipelinePublishV6/PipelineV6ReceiveMemoryOverview.png)
 
 Let's of `byte[]`, `XmlTextReaderNodes` and Message extensions allocations.
 
-![](PipelinePublishV6/PipelineV6BehaviorChainZoomIn.png)
+![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6BehaviorChainZoomIn.png)
 
 The stack trace is also quite larger containing let's of steps that clearly hide the actual pipeline operations like `MutateIncomingTransportMessageBehavior` or `UnitOfWorkBehavior`.
 
@@ -127,11 +127,11 @@ So should we jump trying to optimize those away? Well ideally yes but in this sp
 
 When we look at an indiviual invocation (called `Behavior`) we see the following picture:
 
-![](PipelinePublishV6/PipelineV6BehaviorZoomIn.png)
+![Pipeline Behavior allocations](PipelinePublishV6/PipelineV6BehaviorZoomIn.png)
 
 So let's focus on the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehaviorContext, Task>` and `__DisplayClass**` allocations since they are coming from the pipeline invocation. Luckily dotMemory also allows us to filter by namespace to get a better overview.
 
-![](PipelinePublishV6/PipelineV6StageForkAndDisplayClasses.png)
+![Display class allocations in pipeline](PipelinePublishV6/PipelineV6StageForkAndDisplayClasses.png)
 
 ## Benchmark Pipeline (First iteration)
 
@@ -156,11 +156,11 @@ So let's focus on the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehavior
 
 ## Azure Service Bus SDK
 
-- Show some of the body optimization benchmarks (example https://github.com/danielmarbach/MicroBenchmarks/tree/master/MicroBenchmarks/ServiceBus) and the high level view shown in https://github.com/Azure/azure-sdk-for-net/pull/19996#issuecomment-812663407
+- Show some of the body optimization benchmarks (example <https://github.com/danielmarbach/MicroBenchmarks/tree/master/MicroBenchmarks/ServiceBus>) and the high level view shown in <https://github.com/Azure/azure-sdk-for-net/pull/19996#issuecomment-812663407>
 
 ## AMQP Level
 
-- If possible to down to that level to talk about encoding optimizations (see https://github.com/danielmarbach/azure-amqp-benchmarks)
+- If possible to down to that level to talk about encoding optimizations (see <https://github.com/danielmarbach/azure-amqp-benchmarks>)
 
 ## Recap
 
