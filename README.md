@@ -193,7 +193,7 @@ Luckily there were existing acceptance tests in place. Those acceptance tests ar
 
 ## Improving the pipeline
 
-Before I even started profiling the changes and trying to compare it I started making some improvements to the code there are not really relevant for this talk. In case you are interested what I did you can read these blog posts on the particular blog:
+Before I even started benchmarking the changes and trying to compare it I started making some improvements to the code there are not really relevant for this talk. In case you are interested what I did you can read these blog posts on the particular blog:
 
 - [10X faster execution with compiled expression trees](https://particular.net/blog/10x-faster-execution-with-compiled-expression-trees)
 - [How we achieved 5X faster pipeline execution by removing closure allocations](https://particular.net/blog/pipeline-and-closure-allocations)
@@ -214,7 +214,7 @@ Let's have a look at the memory pressure of the publish operations.
 
 ## Benchmarking the pipeline
 
-TBD
+If you are lucky the thing you want to benchmark might be a public method on some helper or utility without a lot of external dependencies. Then it is mostly simple because you can either have a benchmark project in the solution, reference the assembly in question and start calling the method. In the worst case you might need to add `InternalsVisibleTo` to give the benchmark project access to that helper or utility. So much the theory. In practice software is way messier than we like to admit. Components come sometimes with lots of dependencies. So we can bite the bullet and just throw them all under a benchmark but then the gains you are trying to compare might get lost in the signal to noise ratio.
 
 ## Preventing regressions
 
