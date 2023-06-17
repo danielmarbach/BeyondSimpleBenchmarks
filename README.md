@@ -216,6 +216,10 @@ Let's have a look at the memory pressure of the publish operations.
 
 If you are lucky the thing you want to benchmark might be a public method on some helper or utility without a lot of external dependencies. Then it is mostly simple because you can either have a benchmark project in the solution, reference the assembly in question and start calling the method. In the worst case you might need to add `InternalsVisibleTo` to give the benchmark project access to that helper or utility. So much the theory. In practice software is way messier than we like to admit. Components come sometimes with lots of dependencies. So we can bite the bullet and just throw them all under a benchmark but then the gains you are trying to compare might get lost in the signal to noise ratio.
 
+When I first was faced with this problem I started looking for various approaches and ended up with a pragmatic but potentially slightly controversial approach. I want to highlight this approach worked well for me and I think there is great value in it for others too but as always every approach comes with tradeoffs. Towards the end of the talk I'm also going to do an outlook about preventing regressions in code where I highlight another approach as an alternative.
+
+
+
 ## Preventing regressions
 
 The goal here was to show an approach that has worked well for me for a long time even before the tooling matured. Once you have established a performance culture it would be possible to go even a step further. Preventing regressions is a fundamental part of a good performance culture. The cheapest regression is one that does not get into the product.
