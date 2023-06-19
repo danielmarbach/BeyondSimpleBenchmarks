@@ -22,11 +22,6 @@ public class Step1_PipelineExecution
     [Params(10, 20, 40)]
     public int PipelineDepth { get; set; }
 
-    private BehaviorContext behaviorContext;
-    private PipelineModifications pipelineModificationsBeforeOptimizations;
-    private PipelineModifications pipelineModificationsAfterOptimizations;
-    private BaseLinePipeline<IBehaviorContext> pipelineBeforeOptimizations;
-    private PipelineOptimization<IBehaviorContext> pipelineAfterOptimizations;
 
     [GlobalSetup]
     public void SetUp()
@@ -64,4 +59,10 @@ public class Step1_PipelineExecution
     {
         await pipelineAfterOptimizations.Invoke(behaviorContext);
     }
+
+    private BehaviorContext behaviorContext;
+    private PipelineModifications pipelineModificationsBeforeOptimizations;
+    private PipelineModifications pipelineModificationsAfterOptimizations;
+    private BaseLinePipeline<IBehaviorContext> pipelineBeforeOptimizations;
+    private PipelineOptimization<IBehaviorContext> pipelineAfterOptimizations;
 }

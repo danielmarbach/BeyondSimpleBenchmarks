@@ -218,7 +218,66 @@ If you are lucky the thing you want to benchmark might be a public method on som
 
 When I first was faced with this problem I started looking for various approaches and ended up with a pragmatic but potentially slightly controversial approach. I want to highlight this approach worked well for me and I think there is great value in it for others too but as always every approach comes with tradeoffs. Towards the end of the talk I'm also going to do an outlook about preventing regressions in code where I highlight another approach as an alternative.
 
+The pragmatic approach I took was copy-pasting the existing relevant pipeline components and adjusting the source code to the bare essentials. For example since the pipeline is quite composable I can remove all existing behaviors and just have behaviors relevant in my test harness. Furthermore the dependency injection container can be replaced with hardcoded assumptions by simply newing up relevant classes where needed. Actual IO-Operations have been replaced by simply returning completed tasks since those IO-operations are known to be hundreds or thousand times slower anyway and our goal is to remove all obstacles in the way in the pipeline execution before even doing IO-Operations. Without going into much more details about the mechanics of the pipeline here is how the folder structure looks like
 
+![Pipeline extraction folder structure](PipelineOptimizations/FolderStructure.png)
+
+The next question that I have to ask myself is the scenarios I want to benchmark against. For the pipeline we have already mentioned we want to verify the raw pipeline exectution throughput. So that is one scenario. The next question is what influences the pipeline execution throughput. What is known is that the pipeline can be dynamically extended "in-depth" by adding more behavior. So comming up with reasonable pipeline depths would be a good permutation for the pipeline execution benchmark. Let's have a look at the benchmark.
+
+```csharp
+[Config(typeof(Config))]
+public class PipelineExecution {
+    class Config : ManualConfig  {
+        public Config()
+        {
+            AddDiagnoser(MemoryDiagnoser.Default);
+            AddJob(Job.ShortRun);
+        }
+    }
+
+
+    [Params(10, 20, 40)]
+    public int PipelineDepth { get; set; }
+
+
+    [GlobalSetup]
+    public void SetUp()  {
+        behaviorContext = new BehaviorContext();
+
+        pipelineModificationsBeforeOptimizations = new PipelineModifications();
+        for (int i = 0; i < PipelineDepth; i++)
+        {
+            pipelineModificationsBeforeOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
+                typeof(BaseLineBehavior), i.ToString(), b => new BaseLineBehavior()));
+        }
+
+        pipelineModificationsAfterOptimizations = new PipelineModifications();
+        for (int i = 0; i < PipelineDepth; i++)
+        {
+            pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
+                typeof(BehaviorOptimization), i.ToString(), b => new BehaviorOptimization()));
+        }
+
+        pipelineBeforeOptimizations = new BaseLinePipeline<IBehaviorContext>(null, new SettingsHolder(),
+            pipelineModificationsBeforeOptimizations);
+        pipelineAfterOptimizations = new PipelineOptimization<IBehaviorContext>(null, new SettingsHolder(),
+            pipelineModificationsAfterOptimizations);
+    }
+
+    [Benchmark(Baseline = true)]
+    public async Task Before() {
+        await pipelineBeforeOptimizations.Invoke(behaviorContext);
+    }
+
+    [Benchmark]
+    public async Task After() {
+        await pipelineAfterOptimizations.Invoke(behaviorContext);
+    }
+}
+```
+
+Explain above.
+What should I show from the optimization to make people curious without going too much in the weeds?
 
 ## Preventing regressions
 
@@ -229,6 +288,10 @@ With the help of the guidance in [Preventing Regressions](https://github.com/dot
 ```bash
 C:\Projects\performance\src\tools\ResultsComparer> dotnet run --base "C:\results\before" --diff "C:\results\after" --threshold 2%
 ```
+
+## Recap
+
+TBD
 
 ## Benchmark Pipeline (First iteration)
 
