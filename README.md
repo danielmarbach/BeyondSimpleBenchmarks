@@ -222,7 +222,13 @@ The pragmatic approach I took was copy-pasting the existing relevant pipeline co
 
 ![Pipeline extraction folder structure](PipelineOptimizations/FolderStructure.png)
 
-The next question that I have to ask myself is the scenarios I want to benchmark against. For the pipeline we have already mentioned we want to verify the raw pipeline exectution throughput. So that is one scenario. The next question is what influences the pipeline execution throughput. What is known is that the pipeline can be dynamically extended "in-depth" by adding more behavior. So comming up with reasonable pipeline depths would be a good permutation for the pipeline execution benchmark. Let's have a look at the benchmark.
+When writing Unit Tests, we ideally want to test all methods and properties of the given type. We also test both the happy and unhappy paths. The result of every Unit Test run is a single value: passed or failed.
+
+Benchmarks are different. First of all, the result of a benchmark run is never a single value. It's a whole distribution, described with values like mean, standard deviation, min, max and so on. To get a meaningful distribution, the benchmark has to be executed many, many times. This takes a lot of time. The goal of benchmarking is to test the performance of all the methods that are frequently used (hot paths) and should be performant. The focus should be on the most common use cases, not edge cases.
+
+So how do we find those hot paths and the most common use cases?
+
+Let's have a look at the benchmark.
 
 ```csharp
 [Config(typeof(Config))]
@@ -276,8 +282,34 @@ public class PipelineExecution {
 }
 ```
 
-Explain above.
-What should I show from the optimization to make people curious without going too much in the weeds?
+For the pipeline we have already mentioned we want to verify the raw pipeline execution throughput. So that is one of the scenarios we have encapsulates here in this benchmark. 
+
+The above benchmark sets up the infrastructure part in the `[GlobalSetup]` (*) which makes sure the method marked with the attribute is going to be executed exactly once, before running the benchmark for the first time. It is important to do it in the global setup because we are not interested in measuring the setup time of the pipeline (yet).
+
+The next question is what influences the pipeline execution throughput. What is known is that the pipeline can be dynamically extended "in-depth" by adding more behavior. So comming up with reasonable pipeline depths would be a good permutation for the pipeline execution benchmark. The `PipelineDepth` property does exactly that.
+
+To get a good feeling of where we are heading to I configure the benchmark to do a `ShortRun`.
+
+### Benchmark Best practices
+
+- The benchmarks should follow the Single Responsibility Principle as other methods do. It means that a single benchmark should do a single thing.
+- A benchmark should have no side effect. For example adding values to an existing field means the list is growing with every benchmark invocation
+- To prevent from dead code elimination BenchmarkDotNet consumes the result returned from a benchmark and writes it to a volatile field. Alternatively use the [Consumer](https://github.com/dotnet/BenchmarkDotNet/blob/master/src/BenchmarkDotNet/Engines/Consumer.cs) directly.
+- BenchmarkDotNet does not require the user to provide the number of invocations per iteration. This value is determined by BenchmarkDotNet during the Pilot Experiment Stage, based on the IterationTime setting
+- Be explicit.C# language features like implicit casting and var allow us to introduce invisible side effects to the benchmarks.
+
+
+(*) If your benchmark requires a clean state for every invocation, you need to use the `[IterationSetup]` attribute. Unfortunately, just using the `[IterationSetup]` attribute is not enough to get stable results. You also need to make sure that the benchmark itself performs enough of computations for a single invocation to run longer than 100ms. If you don't, your benchmark will be entirely invalid.
+
+### Why Benchmark.NET
+
+Benchmarking is really hard (especially microbenchmarking), you can easily make a mistake during performance measurements.
+BenchmarkDotNet will protect you from the common pitfalls (even for experienced developers) because it does all the dirty work for you:
+
+- BenchmarkDotNet does not require the user to provide the number of iterations and invocations per iteration, it implements a smart heuristic based on standard error and runs the benchmark until the results are stable.
+- BenchmarkDotNet runs every benchmark in a separate process, process isolation allows avoiding side-effects. The more memory allocated by given benchmark, the bigger the difference for in-proc vs out-proc execution.
+- BenchmarkDotNet was designed to make accurate micro-benchmarks with repeatable results possible, to achieve that it does many things, including overhead calculation and subtraction, warmup of the code, it consumes results to avoid dead code elimination.
+- BenchmarkDotNet removes outliers by default
 
 ## Preventing regressions
 
