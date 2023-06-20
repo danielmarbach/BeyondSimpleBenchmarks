@@ -311,6 +311,10 @@ BenchmarkDotNet will protect you from the common pitfalls (even for experienced 
 - BenchmarkDotNet was designed to make accurate micro-benchmarks with repeatable results possible, to achieve that it does many things, including overhead calculation and subtraction, warmup of the code, it consumes results to avoid dead code elimination.
 - BenchmarkDotNet removes outliers by default
 
+## More scenarios that are relevant
+
+TBD
+
 ## Preventing regressions
 
 The goal here was to show an approach that has worked well for me for a long time even before the tooling matured. Once you have established a performance culture it would be possible to go even a step further. Preventing regressions is a fundamental part of a good performance culture. The cheapest regression is one that does not get into the product.
