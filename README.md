@@ -340,6 +340,70 @@ public class Step1_PipelineWarmup {
 
 Because of the design choice of doing the pipeline invocation caching as part of the constructor of the pipeline we need to execute the constructor under a benchmark. Because we want to avoid dead code elimination we simply return the constructed pipeline.
 
+Most of the time it doesn't make sense to test the code path that throws. We would be measuring the performance of throwing and catching the exceptions. Throwing exceptions should be exceptional and exceptions should not be used to control flow. It's an edge case, we should focus on common use cases, not edge cases. But for the pipeline things are a bit different. In a message based system we are potentially receiving thousands of messages a second. If there is a programming error in the code that gets executed NServiceBus will go through a series of retries and eventually move the messages to the error queue for further processing later. When this happends lots and lots of exceptions are thrown plus the stack trace gets added as metadata to the message that is moved to the error queue. This allows visualizing the problem with tools (we can for example group by stack trace characteristics or exceptions) and then retry messages in groups once the programming error is resolved. Long story short the execution throughput in exception cases matters and we need to make sure the stacke trace contains only the necessary information. In essence, exception cases matter for the pipeline.
+
+```csharp
+[Config(typeof(Config))]
+public class Step2_PipelineException {
+    [GlobalSetup]
+    public void SetUp() {
+        behaviorContext = new BehaviorContext();
+
+        pipelineModificationsBeforeOptimizations = new PipelineModifications();
+        for (int i = 0; i < PipelineDepth; i++)
+        {
+            pipelineModificationsBeforeOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
+                typeof(Step1.BehaviorOptimization), i.ToString(), b => new Step1.BehaviorOptimization()));
+        }
+        var stepdId = PipelineDepth + 1;
+        pipelineModificationsBeforeOptimizations.Additions.Add(RegisterStep.Create(stepdId.ToString(), typeof(Throwing), "1", b => new Throwing()));
+
+        pipelineModificationsAfterOptimizations = new PipelineModifications();
+        for (int i = 0; i < PipelineDepth; i++)
+        {
+            pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(i.ToString(),
+                typeof(Step1.BehaviorOptimization), i.ToString(), b => new Step1.BehaviorOptimization()));
+        }
+        pipelineModificationsAfterOptimizations.Additions.Add(RegisterStep.Create(stepdId.ToString(), typeof(Throwing), "1", b => new Throwing()));
+
+        pipelineBeforeOptimizations = new Step1.PipelineOptimization<IBehaviorContext>(null, new SettingsHolder(),
+            pipelineModificationsBeforeOptimizations);
+        pipelineAfterOptimizations = new PipelineOptimization<IBehaviorContext>(null, new SettingsHolder(),
+            pipelineModificationsAfterOptimizations);
+    }
+
+    [Benchmark(Baseline = true)]
+    public async Task Before() {
+        try
+        {
+            await pipelineBeforeOptimizations.Invoke(behaviorContext).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    [Benchmark]
+    public async Task After() {
+        try
+        {
+            await pipelineAfterOptimizations.Invoke(behaviorContext).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+    
+    class Throwing : Behavior<IBehaviorContext> {
+        public override Task Invoke(IBehaviorContext context, Func<Task> next)
+        {
+            throw new InvalidOperationException();
+        }
+    }
+}
+```
+
+
 ## Preventing regressions
 
 The goal here was to show an approach that has worked well for me for a long time, even before the tooling matured. Once you have established a performance culture, it would be possible to go even a step further. Preventing regressions is a fundamental part of a good performance culture. The cheapest regression is one that does not get into the product.
