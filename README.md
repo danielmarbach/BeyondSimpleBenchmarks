@@ -313,7 +313,32 @@ BenchmarkDotNet will protect you from the common pitfalls (even for experienced 
 
 ## More scenarios that are relevant
 
-TBD
+So far we only covered the execution throughput in relation to the pipeline depth. Another scenario that is relevant for the pipeline execution is that we need to measure how in behaves in warmup scenarios. For example depending on the approach we might need to cache some invocation pipelines at startup or at the point of the first invocation.
+
+Benchmark.NET as previously mentioned already does warmups and statistical analysis so that during the execution tests we don't have to think about those scenarios. But if we want to compare how the warmup behavior gets better (or worse) it is required to do a dedicated benchmark.
+
+```csharp
+[Config(typeof(Config))]
+public class Step1_PipelineWarmup {
+    // rest almost the same
+
+    [Benchmark(Baseline = true)]
+    public BaseLinePipeline<IBehaviorContext> Before() {
+        var pipelineBeforeOptimizations = new BaseLinePipeline<IBehaviorContext>(null, new SettingsHolder(),
+            pipelineModificationsBeforeOptimizations);
+        return pipelineBeforeOptimizations;
+    }
+
+    [Benchmark]
+    public PipelineOptimization<IBehaviorContext> After() {
+        var pipelineAfterOptimizations = new PipelineOptimization<IBehaviorContext>(null, new SettingsHolder(),
+            pipelineModificationsAfterOptimizations);
+        return pipelineAfterOptimizations;
+    }
+}
+```
+
+Because of the design choice of doing the pipeline invocation caching as part of the constructor of the pipeline we need to execute the constructor under a benchmark. Because we want to avoid dead code elimination we simply return the constructed pipeline.
 
 ## Preventing regressions
 
