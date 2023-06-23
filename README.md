@@ -18,6 +18,7 @@ Understanding how to create benchmarks is the tip of the iceberg. In this talk, 
 - Starting with an NSB endpoint and explore factors that are in place that have an impact on the throughput. Iterate through all aspects of the stack.
 - Present a few best practices of benchmarking while talking about these concrete examples
 - How do I avoid getting too much into profilers?
+- Framework vs business code performance testing. Although I'm showing the pipeline these things are also good for business code performance testing
 
 ## Introduction
 
@@ -403,6 +404,7 @@ public class Step2_PipelineException {
 }
 ```
 
+Combinatorial explosion. Long run is going to take too long
 
 ## Preventing regressions
 
@@ -413,6 +415,8 @@ Thanks to the guidance in [Preventing Regressions](https://github.com/dotnet/per
 ```bash
 C:\Projects\performance\src\tools\ResultsComparer> dotnet run --base "C:\results\before" --diff "C:\results\after" --threshold 2%
 ```
+
+TODO: 80/20 rule. Code is rarely changing
 
 ## Recap
 
@@ -451,6 +455,9 @@ TBD
 
 - Recap the process of "putting a practical process in-place to isolate components, measure + change + measure again, without breaking current behavior. Rinse and repeat"
 - Recap some of the Benchmark.NET rules but point for more information to the microbenchmark design guidelines
+
+
+CI/CD or machine that executes those benchmarks
 
 ## Interesting further reading material
 
