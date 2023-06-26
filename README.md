@@ -201,23 +201,11 @@ Before I even started benchmarking the changes and trying to compare it , I star
 
 In essence, I applied a bunch of memory allocation optimization tricks that removed all of the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehaviorContext, Task>` and `__DisplayClass**` allocations mentioned previously.
 
-TODO: Maybe move this section below to later?
-
-Let's take a look at the memory pressure of the publish operations.
-
-![Pipeline publish memory overview](PipelinePublishV6/PipelineV6PublishMemoryOverviewOptimized.png)
-
-![Pipeline receive memory overview](PipelinePublishV6/PipelineV6ReceiveMemoryOverviewOptimized.png)
-
-![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6BehaviorChainZoomInOptimized.png)
-
-![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6StageForkAndDisplayClassesOptimized.png)
-
 ## Benchmarking the pipeline
 
 If you are lucky, the thing you want to benchmark might be a public method on some helper or utility without countless external dependencies. Then it is mostly simple because you can either have a benchmark project in the solution, reference the assembly in question, and start calling the method. In the worst case, you might need to add `InternalsVisibleTo` to give the benchmark project access to that helper or utility. So much for the theory. In practice, software is way messier than we like to admit. Components sometimes come with numerous dependencies. So, we can bite the bullet and just throw them all under a benchmark but then the gains you are trying to compare might get lost in the signal-to-noise ratio.
 
-When I first faced this problem, I started looking for various approaches and ended up with a pragmatic but potentially slightly controversial one. I want to highlight that this approach worked well for me, and I think there is great value in it for others too, but as always, every approach comes with tradeoffs. Towards the end of the talk, I'm also going to do an outlook on preventing regressions in code, where I highlight another approach as an alternative.
+When I first faced this problem, I started looking for various approaches and ended up with a pragmatic but potentially slightly controversial one. I want to highlight that this approach worked well for me, and I think there is great value in it for others too, but as always, every approach comes with tradeoffs. Towards the end of the talk, I'm also going to do an outlook on preventing regressions in code, where I highlight another approach as an alternative. That being said I would say apply the 80/20 rule. For code that is not changing that often the approach shown here works really well and gets you started tipping your toes into becoming performance aware quite quickly without overwhelming the whole organization. Remember a culture change takes time and you rather want to make changes gradually.
 
 The pragmatic approach I took was copy-pasting the existing relevant pipeline components and adjusting the source code to the bare essentials. For example, since the pipeline is quite composable, I can remove all existing behaviors and just have relevant behaviors in my test harness. Furthermore, the dependency injection container can be replaced with hard-coded assumptions by simply newing up relevant classes where needed. Actual IO-Operations have been replaced by simply returning completed tasks since those IO-operations are known to be hundreds or a thousand times slower anyway, and our goal is to remove all obstacles in the way of pipeline execution before even doing IO-Operations. Without going into many more details about the mechanics of the pipeline, here is what the folder structure looks like:
 
@@ -404,38 +392,20 @@ public class Step2_PipelineException {
 }
 ```
 
-Combinatorial explosion. Long run is going to take too long
+TODO: Combinatorial explosion. Long run is going to take too long
+TODO: Show how we can iteratively improve things with this approach
 
-## Preventing regressions
+## Bringing it back to the harness
 
-The goal here was to show an approach that has worked well for me for a long time, even before the tooling matured. Once you have established a performance culture, it would be possible to go even a step further. Preventing regressions is a fundamental part of a good performance culture. The cheapest regression is one that does not get into the product.
+Let's take a look at the memory pressure of the publish operations.
 
-Thanks to the guidance in [Preventing Regressions](https://github.com/dotnet/performance/blob/main/docs/benchmarking-workflow-dotnet-runtime.md) and the [ResultComparer](https://github.com/dotnet/performance/blob/main/src/tools/ResultsComparer/README.md) tool, it is possible to execute benchmarks against the baseline version of the code, store the artifacts in a dedicated folder (example `before`), forward the repository history to the optimized versions, build in release mode, execute the same benchmark again, but this time store the results in another folder (example `after`) and then compare them.
+![Pipeline publish memory overview](PipelinePublishV6/PipelineV6PublishMemoryOverviewOptimized.png)
 
-```bash
-C:\Projects\performance\src\tools\ResultsComparer> dotnet run --base "C:\results\before" --diff "C:\results\after" --threshold 2%
-```
+![Pipeline receive memory overview](PipelinePublishV6/PipelineV6ReceiveMemoryOverviewOptimized.png)
 
-TODO: 80/20 rule. Code is rarely changing
+![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6BehaviorChainZoomInOptimized.png)
 
-## Recap
-
-TBD
-
-## Benchmark Pipeline (First iteration)
-
-- [First iteration](https://github.com/Particular/NServiceBus/pull/4125)
-- Explain isolation of the various moving pieces
-- Talk a bit about the before and after pattern
-- Talk about the cycle of improve, measure, improve
-- Various settings like ShortRuns, DryRuns and some best practices
-
-## Benchmark Pipeline (Second iteration)
-
-- [Second iteration](https://github.com/Particular/NServiceBus/pull/6237)
-- Show how we can iteratively improve things with this approach
-
-- [Third iteration](https://github.com/Particular/NServiceBus/pull/6394)
+![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6StageForkAndDisplayClassesOptimized.png)
 
 ## Talk about getting lower on the stack
 
@@ -447,17 +417,34 @@ TBD
 
 - Show some of the body optimization benchmarks (example <https://github.com/danielmarbach/MicroBenchmarks/tree/master/MicroBenchmarks/ServiceBus>) and the high level view shown in <https://github.com/Azure/azure-sdk-for-net/pull/19996#issuecomment-812663407>
 
-## AMQP Level
+
+### AMQP Level
 
 - If possible to down to that level to talk about encoding optimizations (see <https://github.com/danielmarbach/azure-amqp-benchmarks>)
+
+## Preventing regressions
+
+The goal here was to show an approach that has worked well for me for a long time, even before the tooling matured. Once you have established a performance culture, it would be possible to go even a step further. Preventing regressions is a fundamental part of a good performance culture. The cheapest regression is one that does not get into the product.
+
+Thanks to the guidance in [Preventing Regressions](https://github.com/dotnet/performance/blob/main/docs/benchmarking-workflow-dotnet-runtime.md) and the [ResultComparer](https://github.com/dotnet/performance/blob/main/src/tools/ResultsComparer/README.md) tool, it is possible to execute benchmarks against the baseline version of the code, store the artifacts in a dedicated folder (example `before`), forward the repository history to the optimized versions, build in release mode, execute the same benchmark again, but this time store the results in another folder (example `after`) and then compare them.
+
+```bash
+C:\Projects\performance\src\tools\ResultsComparer> dotnet run --base "C:\results\before" --diff "C:\results\after" --threshold 2%
+```
+
+For regression testing it is crucial to have a stable build pipeline to execute the benchmarks against. Otherwise the results of these benchmarks cannot be trusted. Or to quote Andrey Akinshin, one of the authors of Benchmark.NET:
+
+> Two subsequent builds on the same revision can have ranges of 1.5..2 seconds and 12..36 seconds. CPU-bound benchmarks are much more stable than Memory/Disk-bound benchmarks, but the “average” performance levels still can be up to three times different across builds.
+
+> Based on this brief study, I do not recommend using the default GitHub Actions build agent pool for any kind of performance comparisons across multiple builds: such results can not be trusted in the general case. If you want to get a reliable set of performance tests, it’s better to have a dedicated pool of physical build agents with a unified hardware/software configuration using carefully prepared OS images.
+
+[Performance stability of GitHub Actions](https://aakinshin.net/posts/github-actions-perf-stability/)
+
 
 ## Recap
 
 - Recap the process of "putting a practical process in-place to isolate components, measure + change + measure again, without breaking current behavior. Rinse and repeat"
 - Recap some of the Benchmark.NET rules but point for more information to the microbenchmark design guidelines
-
-
-CI/CD or machine that executes those benchmarks
 
 ## Interesting further reading material
 
@@ -466,4 +453,8 @@ CI/CD or machine that executes those benchmarks
 - [How to profile .NET Core applications with dotTrace](https://www.youtube.com/watch?v=ZWS156lKAos)
 - [Performance Profiling with Visual Studio](https://www.youtube.com/watch?v=FpibK0PKfcI&list=PLReL099Y5nRf2cOurn1hI-gSRxsdbC27C)
 - [Microbenchmark Design Guidelines](https://github.com/dotnet/performance/blob/main/docs/microbenchmark-design-guidelines.md)
-
+- Pipeline Optimizations
+  - [First iteration](https://github.com/Particular/NServiceBus/pull/4125)
+  - [Second iteration](https://github.com/Particular/NServiceBus/pull/6237)
+  - [Third iteration](https://github.com/Particular/NServiceBus/pull/6394)
+- [Performance stability of GitHub Actions](https://aakinshin.net/posts/github-actions-perf-stability/)
