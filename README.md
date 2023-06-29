@@ -412,6 +412,65 @@ Let's take a look at the memory pressure of the publish operations.
 
 ## Talk about getting lower on the stack
 
+In the profiling the pipeline I have talked about the importance of the context that has to be taken into account when choosing an area to optimize. In that discussion we saw a lot of allocations being created by the queuing system MSMQ and about the leverage of effect of focusing on the pipeline accross the whole NServiceBus ecosystem.
+
+While describing the performance optimization cycle I have also talked about how that is an iterative approach in which we gradually make changes and shift attention across the code base on the hot path. One way of doing this is by either go breadth first or depth first. At the end of the day it really depends on the code base, various hot paths involved which strategy is more effective. With the NServiceBus pipeline one of the key throughput leverage point besides the pipeline is the transport. So in that case it is possible to look at for example the customer distribution and then pick the transport that has the broadest set of customers. For us the Azure Service Bus has a broad customer range and therefore looking at ways to improve the NServiceBus integration with the Azure Service Bus transport has a great potential for leverage.
+
+So going lower on the stack is what I've done here. In the interest of time I'm not going through the whole process again but show you the first steps that I find helpful even in cases where we might not entirely control the whole code base.
+
+
+```csharp
+await using var serviceBusClient = new ServiceBusClient(connectionString);
+
+await using var sender = serviceBusClient.CreateSender(destination);
+var messages = new List<ServiceBusMessage>(10000);
+for (int i = 0; i < 10000; i++)
+{
+    messages.Add(new ServiceBusMessage(UTF8.GetBytes($"Deep Dive {i} Deep Dive {i} Deep Dive {i} Deep Dive {i} Deep Dive {i} Deep Dive {i}")));
+
+    if (i % 1000 == 0)
+    {
+        await sender.SendMessagesAsync(messages);
+        messages.Clear();
+    }
+}
+
+await sender.SendMessagesAsync(messages);
+
+WriteLine("Messages sent");
+Console.WriteLine("Take snapshot");
+Console.ReadLine();
+
+var countDownEvent = new CountdownEvent(10000);
+
+var processorOptions = new ServiceBusProcessorOptions
+{
+    AutoCompleteMessages = true,
+    MaxConcurrentCalls = 100,
+    MaxAutoLockRenewalDuration = TimeSpan.FromMinutes(10),
+    ReceiveMode = ServiceBusReceiveMode.PeekLock,
+};
+
+await using var receiver = serviceBusClient.CreateProcessor(destination, processorOptions);
+receiver.ProcessMessageAsync += async messageEventArgs =>
+{
+    var message = messageEventArgs.Message;
+    await Out.WriteLineAsync(
+        $"Received message with '{message.MessageId}' and content '{UTF8.GetString(message.Body)}' / binary {message.Body}");
+    countDownEvent.Signal();
+};
+// rest omitted
+await receiver.StartProcessingAsync();
+
+countDownEvent.Wait();
+
+Console.WriteLine("Take snapshot");
+Console.ReadLine();
+
+await receiver.StopProcessingAsync();
+```
+
+
 - Transport Azure Service Bus
 - AMQP
 - Show how we can do various micro optimization that have a compounding effect until we reach the point of redesigning (example body refactoring)
