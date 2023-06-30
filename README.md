@@ -1,4 +1,6 @@
-# Beyond simple benchmarks—A practical guide to optimizing code with BenchmarkDotNet
+# Beyond simple benchmarks — A practical guide to optimizing code with BenchmarkDotNet
+
+Alternative Title: Beyond simple benchmarks — A practical guide to optimizing code
 
 It is vital for code executed at scale to perform well. It is crucial to ensure performance optimizations actually make the code faster. Luckily, we have powerful tools which help—BenchmarkDotNet is a .NET library for benchmarking optimizations, with plenty of simple examples to help get started.
 
@@ -209,6 +211,7 @@ When I first faced this problem, I started looking for various approaches and en
 
 TODO: Make make this argument a bit stronger even to make sure people that are familiar with benchmarking are not too heavily objecting
 Also take about for the code copy approach to simply copy paste the code every time you make changes (my approach is really just an optimization of that approach)
+Maybe also mention that if a component is hard to isolate that might be a good pointer too.
 
 The pragmatic approach I took was copy-pasting the existing relevant pipeline components and adjusting the source code to the bare essentials. For example, since the pipeline is quite composable, I can remove all existing behaviors and just have relevant behaviors in my test harness. Furthermore, the dependency injection container can be replaced with hard-coded assumptions by simply newing up relevant classes where needed. Actual IO-Operations have been replaced by simply returning completed tasks since those IO-operations are known to be hundreds or a thousand times slower anyway, and our goal is to remove all obstacles in the way of pipeline execution before even doing IO-Operations. Without going into many more details about the mechanics of the pipeline, here is what the folder structure looks like:
 
@@ -308,6 +311,8 @@ BenchmarkDotNet will protect you from the common pitfalls (even for experienced 
 So far we only covered the execution throughput in relation to the pipeline depth. Another scenario that is relevant for the pipeline execution is that we need to measure how in behaves in warmup scenarios. For example depending on the approach we might need to cache some invocation pipelines at startup or at the point of the first invocation.
 
 Benchmark.NET as previously mentioned already does warmups and statistical analysis so that during the execution tests we don't have to think about those scenarios. But if we want to compare how the warmup behavior gets better (or worse) it is required to do a dedicated benchmark.
+
+TODO: Maybe leave this out because the added value could be questionable.
 
 ```csharp
 [Config(typeof(Config))]
