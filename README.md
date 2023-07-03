@@ -428,12 +428,12 @@ So going lower on the stack is what I've done here. In the interest of time I'm 
 await using var serviceBusClient = new ServiceBusClient(connectionString);
 
 await using var sender = serviceBusClient.CreateSender(destination);
-var messages = new List<ServiceBusMessage>(10000);
-for (int i = 0; i < 10000; i++)
+var messages = new List<ServiceBusMessage>(1000);
+for (int i = 0; i < 1000; i++)
 {
     messages.Add(new ServiceBusMessage(UTF8.GetBytes($"Deep Dive {i} Deep Dive {i} Deep Dive {i} Deep Dive {i} Deep Dive {i} Deep Dive {i}")));
 
-    if (i % 1000 == 0)
+    if (i % 100 == 0)
     {
         await sender.SendMessagesAsync(messages);
         messages.Clear();
@@ -446,7 +446,7 @@ WriteLine("Messages sent");
 Console.WriteLine("Take snapshot");
 Console.ReadLine();
 
-var countDownEvent = new CountdownEvent(10000);
+var countDownEvent = new CountdownEvent(1000);
 
 var processorOptions = new ServiceBusProcessorOptions
 {
@@ -475,19 +475,21 @@ Console.ReadLine();
 await receiver.StopProcessingAsync();
 ```
 
+The above test harness is a little bit more involved. But the gist is the same. The harness sends 1000 messages concurrently and then waits until they are all received. Within the handler code, the body is accessed multiple times (at the time of writing, I had a hunch accessing the body materializes the byte array on every access). This is how the memory profile looks like
 
-- Transport Azure Service Bus
-- AMQP
-- Show how we can do various micro optimization that have a compounding effect until we reach the point of redesigning (example body refactoring)
+![](AzureServiceBus/BodyBefore.png)
 
-## Azure Service Bus SDK
+The test harness showed quite a few other locations that could benefit from speed-ups that got resolved over multiple iterations of changes. If you want to hear more about some the changes done I suggest you watch "Performance Tricks I learned from contributing to the Azure .NET SDK.".
 
-- Show some of the body optimization benchmarks (example <https://github.com/danielmarbach/MicroBenchmarks/tree/master/MicroBenchmarks/ServiceBus>) and the high level view shown in <https://github.com/Azure/azure-sdk-for-net/pull/19996#issuecomment-812663407>
+I'm a firm believer, it is helpful to push existing code to the limits before trying to redesign things. Only by pushing code to the limits we learn more about the boundary conditions of the code, and that knowledge is crucial input to find a good new design. With the body array allocations, the Azure Service Bus library had a bunch of scenarios that required a completely new way of handling the body in order to address the allocations. Previous iterations of adjusting the memory characteristics on the send and receive hot path though helped to shape the understanding and eventually lead to [great improvements in the current design](https://github.com/Azure/azure-sdk-for-net/pull/19996) (expressiveness, ease of understanding) and better memory characteristics.
 
+![](AzureServiceBus/BodyAfter.png)
 
-### AMQP Level
+This essentially kicked off the performance optimization loop on the "transport" layer. The test harness also made it possible to see layers even deeper down. For example the Azure Service Bus library using a library to manage the Advanced Message Queuing Protocol (AMQP) implementation. The library uses custom encoding mechanisms that created lots of allocations. Once the Azure Service Bus library reached a point of diminishing returns I started tweaking the encodings in the AMQP library.
 
-- If possible to down to that level to talk about encoding optimizations (see <https://github.com/danielmarbach/azure-amqp-benchmarks>)
+The performance optimization loop can be applied on various layers of the stack iteratively. It is also possible to apply the loop in a broader context in several places before going deep on a giving call stack or do a combination of both depending on the use case.
+
+TODO: Do I need to show a benchmark here? https://github.com/danielmarbach/MicroBenchmarks/tree/master/MicroBenchmarks/ServiceBus or https://github.com/danielmarbach/azure-amqp-benchmarks
 
 ## Preventing regressions
 
@@ -506,7 +508,6 @@ For regression testing it is crucial to have a stable build pipeline to execute 
 > Based on this brief study, I do not recommend using the default GitHub Actions build agent pool for any kind of performance comparisons across multiple builds: such results can not be trusted in the general case. If you want to get a reliable set of performance tests, it’s better to have a dedicated pool of physical build agents with a unified hardware/software configuration using carefully prepared OS images.
 
 [Performance stability of GitHub Actions](https://aakinshin.net/posts/github-actions-perf-stability/)
-
 
 ## Recap
 
