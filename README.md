@@ -8,20 +8,6 @@ In most systems, the code we need to optimize is rarely simple. It contains assu
 
 Understanding how to create benchmarks is the tip of the iceberg. In this talk, you'll also learn how to identify what to change, how to isolate code for benchmarking, and more. You'll leave with a toolkit of succinct techniques and the confidence to go ahead and optimize your code.
 
-## Brainstorming
-
-- how to make performance optimization actionable
-- putting a practical process in-place to isolate components, measure + change + measure again, without breaking current behavior. Rinse and repeat
-- combine that with something like a macro benchmark to see how the small changes can all add up to real-world improvements for users
-- What parameters have an impact on what I want to benchmark
-- What are reasonable values for those parameters that make we reasonably certain I have a good comparison baseline without unnecessarily exploding the runtime of the benchmark
-- Can I do a series of quick runs to get a feel of the direction I'm heading vs when are longer runs important
-- Optimize existing things until you hit the point of diminishing return. Exploring those limits makes you learn a ton about potential improvements for a new design
-- Starting with an NSB endpoint and explore factors that are in place that have an impact on the throughput. Iterate through all aspects of the stack.
-- Present a few best practices of benchmarking while talking about these concrete examples
-- How do I avoid getting too much into profilers?
-- Framework vs business code performance testing. Although I'm showing the pipeline these things are also good for business code performance testing
-
 ## Introduction
 
 I remember the first time I started benchmarking my code changes to verify whether the things I thought might accelerate this code really made an impact. I had already seen quite a few Benchmarks written with Benchmark.NET and felt quite certain it wouldn't take long. Oh, I was wrong. I mean, writing the skeleton of the benchmark was indeed simple. The mind-boggling part was trying to figure out what should be taken into the benchmark, how to isolate the code without a crazy amount of refactoring, what should be deliberately cut away to make sure the changes envisioned are going in the right direction, and how to measure, change, and measure without burning away the allotted budget. But why even bother and go through all this hassle?
@@ -513,6 +499,13 @@ For regression testing it is crucial to have a stable build pipeline to execute 
 
 - Recap the process of "putting a practical process in-place to isolate components, measure + change + measure again, without breaking current behavior. Rinse and repeat"
 - Recap some of the Benchmark.NET rules but point for more information to the microbenchmark design guidelines
+- putting a practical process in-place to isolate components, measure + change + measure again, without breaking current behavior. Rinse and repeat
+- combine that with something like a macro benchmark to see how the small changes can all add up to real-world improvements for users
+- What parameters have an impact on what I want to benchmark
+- What are reasonable values for those parameters that make we reasonably certain I have a good comparison baseline without unnecessarily exploding the runtime of the benchmark
+- Can I do a series of quick runs to get a feel of the direction I'm heading vs when are longer runs important
+- Optimize existing things until you hit the point of diminishing return. Exploring those limits makes you learn a ton about potential improvements for a new design
+- Framework vs business code performance testing. Although I'm showing the pipeline these things are also good for business code performance testing
 
 ## Interesting further reading material
 
