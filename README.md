@@ -16,6 +16,8 @@ For code that is executed at scale, the overall throughput and memory characteri
 
 In this talk, I have summarized my personal lessons on how to make performance optimizations actionable. I will show you a practical process to identify some common bottlenecks, isolate components, and measure + change + measure without breaking current behavior. Let's not waste more time and get to the essence of this talk.
 
+TODO: Maybe show a "simple benchmark"
+
 ## The performance loop
 
 For me one of the key principles I try to apply to almost everything in software is making explicit tradeoffs and decisions as we go. This also applies to performance. A reasonably mature team should be "performance aware". My friend Maarten Balliauw once famously said, in some countries you have to be bear aware because for example, when you are hiking in Canada it is good to be prepared for the likelihood of a bear crossing your hiking paths, not so much in Switzerland though ;) I digress...
