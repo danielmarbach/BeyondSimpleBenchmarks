@@ -521,3 +521,6 @@ For regression testing it is crucial to have a stable build pipeline to execute 
   - [Second iteration](https://github.com/Particular/NServiceBus/pull/6237)
   - [Third iteration](https://github.com/Particular/NServiceBus/pull/6394)
 - [Performance stability of GitHub Actions](https://aakinshin.net/posts/github-actions-perf-stability/)
+- [Sample performance investigation using BenchmarkDotNet and PerfView](https://adamsitnik.com/Sample-Perf-Investigation/)
+- [Profiling .NET Code with PerfView and visualizing it with speedscope.app](https://adamsitnik.com/speedscope/)
+- [Adam Sitnik - .NET Performance Investigation](https://www.youtube.com/watch?v=y4HV5m5GR7o)
