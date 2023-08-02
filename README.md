@@ -443,7 +443,11 @@ public class Step2_PipelineException {
 }
 ```
 
-TODO: Show how we can iteratively improve things with this approach
+Maybe you have noticed the names Step1, Step2 and Step3. Because I've gone the extra mile of making relevant things "pluggable" with partial classes and methods it is possible to plug into the benchmark multiple versions of the code optimizations and compare them to each other. Note in the screenshot below how the different step folders contain partial classes that extend the previously shown "infrastructure" in the pipeline folder tweaked for the specific scenario being optimized.
+
+![](PipelineOptimizations/FolderStructureWithHighlights.png)
+
+If you are interested to learn more you can have a look at the repository I will share towards the end of my talk.
 
 ## Bringing it back to the harness
 
