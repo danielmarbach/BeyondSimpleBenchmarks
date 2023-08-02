@@ -10,13 +10,50 @@ Understanding how to create benchmarks is the tip of the iceberg. In this talk, 
 
 ## Introduction
 
-I remember the first time I started benchmarking my code changes to verify whether the things I thought might accelerate this code really made an impact. I had already seen quite a few Benchmarks written with Benchmark.NET and felt quite certain it wouldn't take long. Oh, I was wrong. I mean, writing the skeleton of the benchmark was indeed simple. The mind-boggling part was trying to figure out what should be taken into the benchmark, how to isolate the code without a crazy amount of refactoring, what should be deliberately cut away to make sure the changes envisioned are going in the right direction, and how to measure, change, and measure without burning away the allotted budget. But why even bother and go through all this hassle?
+I remember the first time I started benchmarking my code changes to verify whether the things I thought might accelerate this code really made an impact. I had already seen quite a few Benchmarks similar to the one below written with Benchmark.NET and felt quite certain it wouldn't take long. 
+
+```csharp
+[SimpleJob]
+[MemoryDiagnoser]
+public class StringJoinBenchmarks {
+
+  [Benchmark]
+  public string StringJoin() {
+    return string.Join(", ", Enumerable.Range(0, 10).Select(i => i.ToString()));
+  }
+
+  [Benchmark]
+  public string StringBuilder() {
+    var sb = new StringBuilder();
+    for (int i = 0; i < 10; i++)
+    {
+        sb.Append(i);
+        sb.Append(", ");
+    }
+
+    return sb.ToString(0, sb.Length - 2);
+  }
+
+  [Benchmark]
+  public string ValueStringBuilder() {
+    var seperator = new ReadOnlySpan<char>(new char[] { ',', ' '});
+    using var sb = new ValueStringBuilder(stackalloc char[30]);
+    for (int i = 0; i < 10; i++)
+    {
+        sb.Append(i);
+        sb.Append(seperator);
+    }
+
+    return sb.AsSpan(0, sb.Length - 2).ToString();
+  }
+}
+```
+
+Oh, I was wrong. I mean, writing the skeleton of the benchmark was indeed simple. The mind-boggling part was trying to figure out what should be taken into the benchmark, how to isolate the code without a crazy amount of refactoring, what should be deliberately cut away to make sure the changes envisioned are going in the right direction, and how to measure, change, and measure without burning away the allotted budget. But why even bother and go through all this hassle?
 
 For code that is executed at scale, the overall throughput and memory characteristics are important. Code that wastes unnecessary CPU or memory cycles ends up eating away resources that could be used to serve requests. With modern cloud-native approaches, scalable code is even more important than before because we are often billed by the number of resources consumed. The more efficient the code is, the smaller the bill, or the more requests we can execute for the same amount of money.
 
 In this talk, I have summarized my personal lessons on how to make performance optimizations actionable. I will show you a practical process to identify some common bottlenecks, isolate components, and measure + change + measure without breaking current behavior. Let's not waste more time and get to the essence of this talk.
-
-TODO: Maybe show a "simple benchmark"
 
 ## The performance loop
 
