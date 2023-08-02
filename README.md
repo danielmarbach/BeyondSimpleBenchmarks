@@ -514,8 +514,6 @@ This essentially kicked off the performance optimization loop on the "transport"
 
 The performance optimization loop can be applied on various layers of the stack iteratively. It is also possible to apply the loop in a broader context in several places before going deep on a giving call stack or do a combination of both depending on the use case.
 
-TODO: Do I need to show a benchmark here? https://github.com/danielmarbach/MicroBenchmarks/tree/master/MicroBenchmarks/ServiceBus or https://github.com/danielmarbach/azure-amqp-benchmarks
-
 ## Preventing regressions
 
 The goal here was to show an approach that has worked well for me for a long time, even before the tooling matured. Once you have established a performance culture, it would be possible to go even a step further. Preventing regressions is a fundamental part of a good performance culture. The cheapest regression is one that does not get into the product.
