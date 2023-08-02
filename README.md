@@ -324,9 +324,9 @@ For the pipeline we have already mentioned, we want to verify the raw pipeline e
 
 The above benchmark sets up the infrastructure part in the `[GlobalSetup]` (*) which makes sure the method marked with the attribute will be executed exactly once before running the benchmark for the first time. It is important to do it in the global setup because we are not interested in measuring the setup time of the pipeline yet.
 
-The next question is what influences the pipeline execution throughput. What is known is that the pipeline can be dynamically extended "in-depth" by adding more behavior. So coming up with reasonable pipeline depths would be a good permutation for the pipeline execution benchmark. The `PipelineDepth` property does exactly that.
+The next question is what influences the pipeline execution throughput. What is known is that the pipeline can be dynamically extended "in-depth" by adding more behavior. So coming up with reasonable pipeline depths would be a good permutation for the pipeline execution benchmark. The `PipelineDepth` property does exactly that. Be aware of the potential combinatorial explosion when introducing more parameters to a benchmarks.
 
-To get a good feeling of where we are heading, I configured the benchmark to do a `ShortRun`.
+To get a good feeling of where we are heading, I configured the benchmark to do a `ShortRun`. This is done because regular job runs can take a lot of time and during the mode where I'm still iterating over the approaches I'm just interested in seeing whether I'm going into the right direction vs having more statistically relevent results.
 
 ### Benchmark Best practices
 
@@ -443,7 +443,6 @@ public class Step2_PipelineException {
 }
 ```
 
-TODO: Combinatorial explosion. Long run is going to take too long
 TODO: Show how we can iteratively improve things with this approach
 
 ## Bringing it back to the harness
