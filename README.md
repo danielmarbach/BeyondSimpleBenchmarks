@@ -69,7 +69,7 @@ When it comes to performance, when you are performance aware, it doesn't mean yo
 
 I have covered some of these nuances further in my talk "Performance Tricks I learned from contributing to the Azure .NET SDK.". Once I have a better understanding of the context of the code, depending on the outcome, I start applying the following performance loop.
 
-- Write a simple "sample" or harness that makes it possible to observe the component under inspection with a memory profiler and/or a performance profiler. The profiler snapshots give me an indication of the different subsystems at play, allowing me to make an explicit decision on what to focus on and what to ignore.
+- Write a simple "sample" or harness that makes it possible to observe the component under inspection with a memory profiler and a performance profiler. The profiler snapshots and flamegraphs give me an indication of the different subsystems at play, allowing me to make an explicit decision on what to focus on and what to ignore.
 - Then I select the hot path, for example, the one responsible for the majority of allocations or the biggest slowdown (or where I feel I can make a good enough impact without sinking days and weeks into it). If the code path in question is not well covered, I try to get some tests in place to make sure my tweaks will not break the existing assumptions / behavior => it doesn't help when something is superfast but utterly wrong :)
 - Then I experiment with the changes I have in mind and check whether they pass the tests. Once it functionally works, I put things into a performance harness
 - To save time, I extract the code as well as possible into a dedicated repository and do a series of "short runs" to see if I'm heading in the right direction. Once I'm reasonably happy with the outcome, I do a full job run to verify the before and after.
@@ -134,7 +134,7 @@ During the pipeline execution, there is a lot that is actually going on. For exa
 
 ### Profiling the pipeline
 
-To get a good overview of the problem domain in front of us, it is vital to create a sample or harness that allows us to zoom in on the problem space. Since my goal is to optimize the pipeline invocation, I can look at the pipeline invocation with a tool like DotTrace from Jetbrains to get a good understanding of the performance bottlenecks and/or analyze the memory usage with a tool like DotMemory.
+To get a good overview of the problem domain in front of us, it is vital to create a sample or harness that allows us to zoom in on the problem space. Since my goal is to optimize the pipeline invocation, I can look at the pipeline invocation with a tool like DotTrace from Jetbrains to get a good understanding of the performance bottlenecks and analyze the memory usage with a tool like DotMemory. It is always recommended to look at multiple aspects such as memory, CPU, IO involvement and more to get insights from multiple angles
 
 Below is an excerpt of such a harness. The harness sets up NServiceBus with a transport, a serializer and an InMemory persistence (to avoid unnecessary overhead that is currently not our focus). The harness has various points where I can take a snapshot to understand the memory characteristics of what's happening. In general, such a harness should adhere to the following guidelines:
 
@@ -212,6 +212,26 @@ When we look at an individual invocation (called `Behavior`) we see the followin
 So let's focus on the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehaviorContext, Task>` and `__DisplayClass**` allocations since they are coming from the pipeline invocation. Luckily, dotMemory also allows us to filter by namespace to get a better overview.
 
 ![Display class allocations in pipeline](PipelinePublishV6/PipelineV6StageForkAndDisplayClasses.png)
+
+Let's take a look at the CPU characteristics of the publish operations.
+
+![Pipeline publish CPU overview](PipelinePublishV6/PipelineV6PublishCpuOverview.png)
+
+![Pipeline publish CPU flamegraph overview](PipelinePublishV6/PipelineV6PublishCpuOverviewFlamegraph.png)
+
+by the way if you prefer using "free tools" and you are running in Windows I can highly recommended using PerfView which gives you similar results and in more recent versions also allows zooming into the flamegraph.
+
+![Pipeline publish CPU flamegraph overview](PipelinePublishV6/PipelineV6PublishCpuPerfViewFlamegraph.png)
+
+We can see that the `BehaviorChain` is consuming 20% and the `BehaviorInvoker` 12.3% of the CPU which is a third of the overall time spent executing the mechanisms of the pipeline.
+
+On the receive end it is slightly less dramatic but there is still a measurable impact.
+
+![Pipeline receive CPU overview](PipelinePublishV6/PipelineV6ReceiveCpuOverview.png)
+
+We can see that the `BehaviorChain` is consuming 4.8% and the `BehaviorInvoker` 9.2% of the CPU which is a seventh of the overall the time spent executing the mechanisms of the pipeline.
+
+![Pipeline receive CPU flamegraph overview](PipelinePublishV6/PipelineV6ReceiveCpuOverviewFlamegraph.png)
 
 ## Testing the pipeline
 
@@ -434,11 +454,21 @@ Let's take a look at the memory pressure of the publish operations.
 
 ![Pipeline publish memory overview](PipelinePublishV6/PipelineV6PublishMemoryOverviewOptimized.png)
 
+The pressure of the receive operations.
+
 ![Pipeline receive memory overview](PipelinePublishV6/PipelineV6ReceiveMemoryOverviewOptimized.png)
 
 ![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6BehaviorChainZoomInOptimized.png)
 
 ![Pipeline behavior chain allocations](PipelinePublishV6/PipelineV6StageForkAndDisplayClassesOptimized.png)
+
+Let's take a look on how we are doing in terms of CPU.
+
+![Pipeline publish CPU overview](PipelinePublishV6/PipelineV6PublishCpuOverviewOptimizedFlamegraph.png)
+
+![Pipeline receive memory overview](PipelinePublishV6/PipelineV6ReceiveCpuOverviewOptimizedFlamegraph.png)
+
+The flamegraphs clearly indicate how all the bload that previously has eaten up 32.3% of the publish operations and 14% of the receive operations are all gone. That is a big win also from a CPU profiling perspective. 
 
 ## Talk about getting lower on the stack
 
