@@ -53,6 +53,8 @@ Oh, I was wrong. I mean, writing the skeleton of the benchmark was indeed simple
 
 For code that is executed at scale, the overall throughput and memory characteristics are important. Code that wastes unnecessary CPU or memory cycles ends up eating away resources that could be used to serve requests. With modern cloud-native approaches, scalable code is even more important than before because we are often billed by the number of resources consumed. The more efficient the code is, the smaller the bill, or the more requests we can execute for the same amount of money. And let's not forget more efficient code execution also means we are consuming less energy which is an important cornerstone for GreenIT too.
 
+> We were able to see Azure Compute cost reduction of up to 50% per month, on average we observed 24% monthly cost reduction after migrating to .NET 6. The reduction in cores reduced Azure spend by 24%. [Microsoft Teams’ Infrastructure and Azure Communication Services’ Journey to .NET 6](https://devblogs.microsoft.com/dotnet/microsoft-teams-infrastructure-and-azure-communication-services-journey-to-dotnet-6/)
+
 In this talk, I have summarized my personal lessons on how to make performance optimizations actionable. I will show you a practical process to identify some common bottlenecks, isolate components, and measure + change + measure without breaking current behavior. Let's not waste more time and get to the essence of this talk.
 
 ## The performance loop
