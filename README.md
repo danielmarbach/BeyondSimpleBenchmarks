@@ -469,7 +469,7 @@ Let's take a look on how we are doing in terms of CPU.
 
 ![Pipeline receive memory overview](PipelinePublishV6/PipelineV6ReceiveCpuOverviewOptimizedFlamegraph.png)
 
-The flamegraphs clearly indicate how all the bload that previously has eaten up 32.3% of the publish operations and 14% of the receive operations are all gone. That is a big win also from a CPU profiling perspective. 
+The flamegraphs clearly indicate how all the bloat that previously has eaten up 32.3% of the publish operations and 14% of the receive operations are all gone. That is a big win also from a CPU profiling perspective. Be careful to not overemphasize on the percentage improvements only. It is much more important to look at the CPU wall clock time improvements. I used percentage here to get a point across.
 
 ## Talk about getting lower on the stack
 
