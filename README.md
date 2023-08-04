@@ -531,7 +531,7 @@ Console.ReadLine();
 await receiver.StopProcessingAsync();
 ```
 
-The above test harness is a little bit more involved. But the gist is the same. The harness sends 1000 messages concurrently and then waits until they are all received. Within the handler code, the body is accessed multiple times (at the time of writing, I had a hunch accessing the body materializes the byte array on every access). This is how the memory profile looks like
+The above test harness is a little bit more involved. But the gist is the same. The harness sends 1000 messages concurrently and then waits until they are all received. Within the handler code, the body is accessed multiple times (at the time of writing, I had a hunch accessing the body materializes the byte array on every access). This is how the memory profile looks like (here I'm just focusing on the memory profile, but of course you'd be doing CPU and IO profiles too ;) ):
 
 ![](AzureServiceBus/BodyBefore.png)
 
