@@ -1,0 +1,7 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# handle html things
+*.css             text diff=css
+*.htm             text diff=html
+*.html            text diff=html
