@@ -1,24 +1,12 @@
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Jobs;
 using NServiceBus.Pipeline;
 
 namespace PipelineOptimizations.Step3;
 
-[Config(typeof(Config))]
+[ShortRunJob]
+[MemoryDiagnoser]
 public class Step3_PipelineException
 {
-    class Config : ManualConfig
-    {
-        public Config()
-        {
-            AddDiagnoser(MemoryDiagnoser.Default);
-            AddJob(Job.ShortRun);
-        }
-    }
-
-
     [Params(10, 20, 40)]
     public int PipelineDepth { get; set; }
 

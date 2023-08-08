@@ -6,19 +6,10 @@ using NServiceBus.Pipeline;
 
 namespace PipelineOptimizations.Step1;
 
-[Config(typeof(Config))]
+[ShortRunJob]
+[MemoryDiagnoser]
 public class Step1_PipelineWarmup
 {
-    class Config : ManualConfig
-    {
-        public Config()
-        {
-            AddDiagnoser(MemoryDiagnoser.Default);
-            AddJob(Job.ShortRun);
-        }
-    }
-
-
     [Params(10, 20, 40)]
     public int PipelineDepth { get; set; }
 

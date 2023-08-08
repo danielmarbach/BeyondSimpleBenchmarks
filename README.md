@@ -273,16 +273,9 @@ How do we find those hot paths and the most common use cases?
 Let's take a look at the benchmark.
 
 ```csharp
-[Config(typeof(Config))]
+[ShortRunJob]
+[MemoryDiagnoser]
 public class PipelineExecution {
-    class Config : ManualConfig  {
-        public Config()
-        {
-            AddDiagnoser(MemoryDiagnoser.Default);
-            AddJob(Job.ShortRun);
-        }
-    }
-
 
     [Params(10, 20, 40)]
     public int PipelineDepth { get; set; }
@@ -362,7 +355,8 @@ Benchmark.NET as previously mentioned already does warmups and statistical analy
 TODO: Maybe leave this out because the added value could be questionable.
 
 ```csharp
-[Config(typeof(Config))]
+[ShortRunJob]
+[MemoryDiagnoser]
 public class Step1_PipelineWarmup {
     // rest almost the same
 
@@ -387,7 +381,8 @@ Because of the design choice of doing the pipeline invocation caching as part of
 Most of the time it doesn't make sense to test the code path that throws. We would be measuring the performance of throwing and catching the exceptions. Throwing exceptions should be exceptional and exceptions should not be used to control flow. It's an edge case, we should focus on common use cases, not edge cases. But for the pipeline things are a bit different. In a message based system we are potentially receiving thousands of messages a second. If there is a programming error in the code that gets executed NServiceBus will go through a series of retries and eventually move the messages to the error queue for further processing later. When this happends lots and lots of exceptions are thrown plus the stack trace gets added as metadata to the message that is moved to the error queue. This allows visualizing the problem with tools (we can for example group by stack trace characteristics or exceptions) and then retry messages in groups once the programming error is resolved. Long story short the execution throughput in exception cases matters and we need to make sure the stacke trace contains only the necessary information. In essence, exception cases matter for the pipeline.
 
 ```csharp
-[Config(typeof(Config))]
+[ShortRunJob]
+[MemoryDiagnoser]
 public class Step2_PipelineException {
     [GlobalSetup]
     public void SetUp() {
