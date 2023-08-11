@@ -334,7 +334,8 @@ To get a good feeling of where we are heading, I configured the benchmark to do 
 - A benchmark should have no side effects. For example, adding values to an existing field means the list is growing with every benchmark invocation.
 - To prevent dead code elimination, BenchmarkDotNet consumes the result returned from a benchmark and writes it to a volatile field. Alternatively, use the [Consumer](https://github.com/dotnet/BenchmarkDotNet/blob/master/src/BenchmarkDotNet/Engines/Consumer.cs) directly.
 - BenchmarkDotNet does not require the user to provide the number of invocations per iteration. This value is determined by BenchmarkDotNet during the Pilot Experiment Stage, based on the IterationTime setting
-- Be explicit.C# language features like implicit casting and var allow us to introduce invisible side effects to the benchmarks.
+- Be explicit. C# language features like implicit casting and var allow us to introduce invisible side effects to the benchmarks.
+- Avoid running any resource-heavy processes that could spoil the benchmark results while running the benchmarks
 
 
 (*) If your benchmark requires a clean state for every invocation, you need to use the `[IterationSetup]` attribute. Unfortunately, just using the `[IterationSetup]` attribute is not enough to get stable results. You also need to make sure that the benchmark itself performs enough computations for a single invocation to run longer than 100ms. If you don't, your benchmark will be entirely invalid.
