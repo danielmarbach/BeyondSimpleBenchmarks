@@ -9,7 +9,7 @@ In most systems, the code we need to optimize is rarely simple. It contains assu
 Understanding how to create benchmarks is the tip of the iceberg. In this talk, you'll also learn how to identify what to change, how to isolate code for benchmarking, and more. You'll leave with a toolkit of succinct techniques and the confidence to go ahead and optimize your code.
 
 - [Slides Online](https://danielmarbach.github.io/BeyondSimpleBenchmarks)
-- [Slides PDF](TBD)
+- [Slides PDF](slides.pdf)
 
 ## Introduction
 
