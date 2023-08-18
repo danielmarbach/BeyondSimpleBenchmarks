@@ -224,6 +224,8 @@ Let's take a look at the CPU characteristics of the publish operations.
 
 ![Pipeline publish CPU overview](PipelinePublishV6/PipelineV6PublishCpuOverview.png)
 
+Each call is shown as a horizontal bar whose length depends on the call’s total time, which equals the function’s own time + the time of all its child functions. The longer the call, the longer the bar. The coolest thing about the flame graph is that you don’t need to thoroughly analyze the time of each call, as you immediately see it on the graph.
+
 ![Pipeline publish CPU flamegraph overview](PipelinePublishV6/PipelineV6PublishCpuOverviewFlamegraph.png)
 
 by the way if you prefer using "free tools" and you are running in Windows I can highly recommended using PerfView which gives you similar results and in more recent versions also allows zooming into the flamegraph.
