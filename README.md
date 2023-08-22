@@ -220,17 +220,21 @@ So let's focus on the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehavior
 
 ![Display class allocations in pipeline](PipelinePublishV6/PipelineV6StageForkAndDisplayClasses.png)
 
-Let's take a look at the CPU characteristics of the publish operations.
-
-![Pipeline publish CPU overview](PipelinePublishV6/PipelineV6PublishCpuOverview.png)
-
-Each call is shown as a horizontal bar whose length depends on the call’s total time, which equals the function’s own time + the time of all its child functions. The longer the call, the longer the bar. The coolest thing about the flame graph is that you don’t need to thoroughly analyze the time of each call, as you immediately see it on the graph.
+Let's take a look at the CPU characteristics of the publish operations in flamegraphs
 
 ![Pipeline publish CPU flamegraph overview](PipelinePublishV6/PipelineV6PublishCpuOverviewFlamegraph.png)
 
-by the way if you prefer using "free tools" and you are running in Windows I can highly recommended using PerfView which gives you similar results and in more recent versions also allows zooming into the flamegraph.
+The picture in the flamegraph, after zoomin in, shows how much the infrastructure overhead occupies the CPU.
+
+Each call is shown as a horizontal bar whose length depends on the call’s total time, which equals the function’s own time + the time of all its child functions. The longer the call, the longer the bar. The coolest thing about the flame graph is that you don’t need to thoroughly analyze the time of each call, as you immediately see it on the graph.
+
+By the way if you prefer using "free tools" and you are running in Windows I can highly recommended using PerfView which gives you similar results and in more recent versions also allows zooming into the flamegraph.
 
 ![Pipeline publish CPU flamegraph overview](PipelinePublishV6/PipelineV6PublishCpuPerfViewFlamegraph.png)
+
+And this is how it looks in the Hotspots overview filtered into the Publish operation.
+
+![Pipeline publish CPU overview](PipelinePublishV6/PipelineV6PublishCpuOverview.png)
 
 We can see that the `BehaviorChain` is consuming 20% and the `BehaviorInvoker` 12.3% of the CPU which is a third of the overall time spent executing the mechanisms of the pipeline.
 
@@ -241,6 +245,8 @@ On the receive end it is slightly less dramatic but there is still a measurable 
 We can see that the `BehaviorChain` is consuming 4.8% and the `BehaviorInvoker` 9.2% of the CPU which is a seventh of the overall the time spent executing the mechanisms of the pipeline.
 
 ![Pipeline receive CPU flamegraph overview](PipelinePublishV6/PipelineV6ReceiveCpuOverviewFlamegraph.png)
+
+The same picture of the infrastructure overhead becomes apparent in the receive pipeline by even only glancing at the flamegraph.
 
 ## Testing the pipeline
 
