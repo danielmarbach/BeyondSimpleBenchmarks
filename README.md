@@ -139,7 +139,7 @@ public class Behavior : Behavior<IIncomingLogicalMessageContext> {
 
 During the pipeline execution, there is a lot that is actually going on. For example, for an incoming message, the transport (e.g. Azure Service Bus, SQS, MSMQ...) pushes the raw data of messages to the pipeline. The pipeline will deserialize the payload. Based on the message type, it might resolve infrastructure such as message handlers from the dependency injection container and load data from the persistence selected by the user (e.g CosmosDB, SQL Server, DynamoDB...). There are bits and pieces that create OpenTelemetry traces, logs and much more. In essence, we have to somehow focus on parts that are relevant to us within the context we are optimizing for. We can achieve that by profiling.
 
-### Profiling the pipeline
+## Profiling the pipeline
 
 To get a good overview of the problem domain in front of us, it is vital to create a sample or harness that allows us to zoom in on the problem space. Since my goal is to optimize the pipeline invocation, I can look at the pipeline invocation with a tool like DotTrace from Jetbrains to get a good understanding of the performance bottlenecks and analyze the memory usage with a tool like DotMemory. It is always recommended to look at multiple aspects such as memory, CPU, IO involvement and more to get insights from multiple angles
 
@@ -148,7 +148,6 @@ Below is an excerpt of such a harness. The harness sets up NServiceBus with a tr
 - Compiled and executed under Release mode
 - The harness should run for at least a few seconds and keep the overhead as small as possible to make sure it does not dominate the profile.
 - It's recommended to disable Tiered JIT (`<TieredCompilation>false</TieredCompilation>`) (to avoid the need of warm up) and emit full symbols (`<DebugType>pdbonly</DebugType` and `<DebugSymbols>true</DebugSymbols>`) (not enabled by default for Release builds)
-
 
 For example, it publishes 1000 events in parallel, which are then received by a handler that does nothing.
 
@@ -220,17 +219,21 @@ So let's focus on the `Behavior`, `BehaviorChain`, `Func<Task>`, `Func<IBehavior
 
 ![Display class allocations in pipeline](PipelinePublishV6/PipelineV6StageForkAndDisplayClasses.png)
 
-Let's take a look at the CPU characteristics of the publish operations.
-
-![Pipeline publish CPU overview](PipelinePublishV6/PipelineV6PublishCpuOverview.png)
-
-Each call is shown as a horizontal bar whose length depends on the call’s total time, which equals the function’s own time + the time of all its child functions. The longer the call, the longer the bar. The coolest thing about the flame graph is that you don’t need to thoroughly analyze the time of each call, as you immediately see it on the graph.
+Let's take a look at the CPU characteristics of the publish operations in flamegraphs
 
 ![Pipeline publish CPU flamegraph overview](PipelinePublishV6/PipelineV6PublishCpuOverviewFlamegraph.png)
 
-by the way if you prefer using "free tools" and you are running in Windows I can highly recommended using PerfView which gives you similar results and in more recent versions also allows zooming into the flamegraph.
+The picture in the flamegraph, after zoomin in, shows how much the infrastructure overhead occupies the CPU.
+
+Each call is shown as a horizontal bar whose length depends on the call’s total time, which equals the function’s own time + the time of all its child functions. The longer the call, the longer the bar. The coolest thing about the flame graph is that you don’t need to thoroughly analyze the time of each call, as you immediately see it on the graph.
+
+By the way if you prefer using "free tools" and you are running in Windows I can highly recommended using PerfView which gives you similar results and in more recent versions also allows zooming into the flamegraph.
 
 ![Pipeline publish CPU flamegraph overview](PipelinePublishV6/PipelineV6PublishCpuPerfViewFlamegraph.png)
+
+And this is how it looks in the Hotspots overview filtered into the Publish operation.
+
+![Pipeline publish CPU overview](PipelinePublishV6/PipelineV6PublishCpuOverview.png)
 
 We can see that the `BehaviorChain` is consuming 20% and the `BehaviorInvoker` 12.3% of the CPU which is a third of the overall time spent executing the mechanisms of the pipeline.
 
@@ -241,6 +244,8 @@ On the receive end it is slightly less dramatic but there is still a measurable 
 We can see that the `BehaviorChain` is consuming 4.8% and the `BehaviorInvoker` 9.2% of the CPU which is a seventh of the overall the time spent executing the mechanisms of the pipeline.
 
 ![Pipeline receive CPU flamegraph overview](PipelinePublishV6/PipelineV6ReceiveCpuOverviewFlamegraph.png)
+
+The same picture of the infrastructure overhead becomes apparent in the receive pipeline by even only glancing at the flamegraph.
 
 ## Testing the pipeline
 
@@ -352,7 +357,7 @@ BenchmarkDotNet will protect you from the common pitfalls (even for experienced 
 - BenchmarkDotNet was designed to make accurate micro-benchmarks with repeatable results possible, to achieve that, it does many things, including overhead calculation and subtraction, warm up of the code, it consumes results to avoid dead code elimination.
 - BenchmarkDotNet removes outliers by default
 
-## More scenarios that are relevant
+### More scenarios that are relevant
 
 So far we only covered the execution throughput in relation to the pipeline depth. Another scenario that is relevant for the pipeline execution is that we need to measure how in behaves in warmup scenarios. For example depending on the approach we might need to cache some invocation pipelines at startup or at the point of the first invocation.
 
@@ -454,7 +459,9 @@ Maybe you have noticed the names Step1, Step2 and Step3. Because I've gone the e
 
 If you are interested to learn more you can have a look at the repository I will share towards the end of my talk.
 
-## Bringing it back to the harness
+## Profiling the pipeline (again)
+
+In my view it is not enough to run a benchmark, doing a before and after comparison and then just be done with it. I personally find it crucial to see how the optimizations actually fit into the end2end scenarios that we have previously created a test harness for. So after bringing back those changes into the previously created test harness we can go through the profiling steps again to see what the gains entail.
 
 Let's take a look at the memory pressure of the publish operations.
 
@@ -476,7 +483,7 @@ Let's take a look on how we are doing in terms of CPU.
 
 The flamegraphs clearly indicate how all the bloat that previously has eaten up 32.3% of the publish operations and 14% of the receive operations are all gone. That is a big win also from a CPU profiling perspective. Be careful to not overemphasize on the percentage improvements only. It is much more important to look at the CPU wall clock time improvements. I used percentage here to get a point across.
 
-## Talk about getting lower on the stack
+## Getting lower on the stack
 
 ![NServiceBus Pipeline Overview](AzureServiceBus/MSMQ.drawio.svg)
 
@@ -577,7 +584,7 @@ For regression testing it is crucial to have a stable build pipeline to execute 
 - Recap the process of "putting a practical process in-place to isolate components, measure + change + measure again, without breaking current behavior. Rinse and repeat"
 - Recap some of the Benchmark.NET rules but point for more information to the microbenchmark design guidelines
 - putting a practical process in-place to isolate components, measure + change + measure again, without breaking current behavior. Rinse and repeat
-- combine that with something like a macro benchmark to see how the small changes can all add up to real-world improvements for users
+- combine that with something like profiling to see how the small changes can all add up to real-world improvements for users
 - What parameters have an impact on what I want to benchmark
 - What are reasonable values for those parameters that make we reasonably certain I have a good comparison baseline without unnecessarily exploding the runtime of the benchmark
 - Can I do a series of quick runs to get a feel of the direction I'm heading vs when are longer runs important
