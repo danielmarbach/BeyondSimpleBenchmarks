@@ -147,7 +147,7 @@ Below is an excerpt of such a harness. The harness sets up NServiceBus with a tr
 
 - Compiled and executed under Release mode
 - The harness should run for at least a few seconds and keep the overhead as small as possible to make sure it does not dominate the profile.
-- It's recommended to disable Tiered JIT (`<TieredCompilation>false</TieredCompilation>`) (to avoid the need of warm up) and emit full symbols (`<DebugType>pdbonly</DebugType` and `<DebugSymbols>true</DebugSymbols>`) (not enabled by default for Release builds)
+- It's recommended to disable Tiered JIT (`<TieredCompilation>false</TieredCompilation>`) (to avoid the need of warm up) and emit full symbols (`<DebugType>pdbonly</DebugType>` and `<DebugSymbols>true</DebugSymbols>`) (not enabled by default for Release builds)
 
 For example, it publishes 1000 events in parallel, which are then received by a handler that does nothing.
 
