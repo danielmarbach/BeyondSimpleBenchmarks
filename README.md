@@ -141,7 +141,7 @@ During the pipeline execution, there is a lot that is actually going on. For exa
 
 ## Profiling the pipeline
 
-To get a good overview of the problem domain in front of us, it is vital to create a sample or harness that allows us to zoom in on the problem space. Since my goal is to optimize the pipeline invocation, I can look at the pipeline invocation with a tool like DotTrace from Jetbrains to get a good understanding of the performance bottlenecks and analyze the memory usage with a tool like DotMemory. It is always recommended to look at multiple aspects such as memory, CPU, IO involvement and more to get insights from multiple angles
+To get a good overview of the problem domain in front of us, it is vital to create a sample or harness that allows us to zoom in on the problem space. Since my goal is to optimize the pipeline invocation, I can look at the pipeline invocation with a tool like DotTrace from Jetbrains to get a good understanding of the performance bottlenecks and analyze the memory usage with a tool like DotMemory. It is always recommended to look at multiple aspects such as memory, CPU, IO involvement and more to get insights from multiple angles.
 
 Below is an excerpt of such a harness. The harness sets up NServiceBus with a transport, a serializer and an InMemory persistence (to avoid unnecessary overhead that is currently not our focus). The harness has various points where I can take a snapshot to understand the memory characteristics of what's happening. In general, such a harness should adhere to the following guidelines:
 
@@ -189,7 +189,7 @@ public class MyEventHandler : IHandleMessages<MyEvent>
 }
 ```
 
-Let's take a look at the memory pressure of the publish operations.
+Let's take a look at the memory pressure of the publish operations. I'm first exploring the memory allocations because allocations have a big impact on the throughput of the system and can usually be optimized up to a certain point with a few quick wins without unnecessarily increasing the complexity just yet. This often comes from the fact that many systems have not yet been optimized.
 
 ![Pipeline publish memory overview](PipelinePublishV6/PipelineV6PublishMemoryOverview.png)
 
