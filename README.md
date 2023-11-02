@@ -1,12 +1,19 @@
-# Beyond simple benchmarks — A practical guide to optimizing code with BenchmarkDotNet
+# Beyond simple benchmarks—a practical guide to optimizing code
 
-Alternative Title: Beyond simple benchmarks — A practical guide to optimizing code
+Alternative Title: Beyond simple benchmarks — A practical guide to optimizing code with BenchmarkDotNet
 
-It is vital for code executed at scale to perform well. It is crucial to ensure performance optimizations actually make the code faster. Luckily, we have powerful tools which help—BenchmarkDotNet is a .NET library for benchmarking optimizations, with plenty of simple examples to help get started.
+We know it’s vital that code executed at scale performs well. But how do we know if our performance optimizations actually make it faster? Fortunately, we have powerful tools which help—BenchmarkDotNet is a .NET library for benchmarking optimizations, with many simple examples to help get started.
 
-In most systems, the code we need to optimize is rarely simple. It contains assumptions we need to discover before we even know what to improve. The code is hard to isolate. It has dependencies, which may or may not be relevant to optimization. And even when we've decided what to optimize, it's hard to reliably benchmark the before and after. Only measurement can tell us if our changes actually make things faster. Without them, we could even make things slower, without even realizing.
+In most systems, the code we need to optimize is rarely straightforward. It contains assumptions we need to discover before we even know what to improve. The code is hard to isolate. It has dependencies, which may or may not be relevant to optimization. And even when we’ve decided what to optimize, it’s hard to reliably benchmark the before and after. Only measurements can tell us if our changes actually make things faster. Without them, we could even make things slower, without realizing.
 
-Understanding how to create benchmarks is the tip of the iceberg. In this talk, you'll also learn how to identify what to change, how to isolate code for benchmarking, and more. You'll leave with a toolkit of succinct techniques and the confidence to go ahead and optimize your code.
+In this talk you’ll learn how to:
+
+- Identify areas of improvement which optimize the effort-to-value ratio
+- Isolate code to make its performance measurable without extensive refactoring
+- Apply the performance loop of measuring, changing and validating to ensure performance actually improves and nothing breaks
+- Gradually become more “performance aware” without costing an arm and a leg
+
+## Slides
 
 - [Slides Online](https://danielmarbach.github.io/BeyondSimpleBenchmarks)
 - [Slides PDF](slides.pdf)
