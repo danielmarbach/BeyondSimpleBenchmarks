@@ -1,6 +1,18 @@
-# Beyond simple benchmarks—a practical guide to optimizing code
+# The performance loop—A practical guide to profiling and benchmarking
 
-Alternative Title: Beyond simple benchmarks — A practical guide to optimizing code with BenchmarkDotNet
+Code executed at scale must perform well. But how do we know if our performance optimizations actually make a difference? 
+
+Taking a step back, how do we even know what we need to optimize? First, we might need to discover hidden assumptions in the code, or figure out how to isolate the performance-critical bits. Even once we know what must be optimized, it's challenging to create reliable before-and-after benchmarks. We can only tell if our changes helped by profiling, improving, measuring, and profiling again. Without these steps, we might make things slower without realizing it.
+
+In this talk, you'll learn how to:
+* Identify the areas with an effort-to-value ratio that make them worth improving
+* Isolate code to make its performance measurable without excessive refactoring
+* Apply the "performance loop" to ensure performance actually improves and nothing breaks
+* Become more “performance-aware” without getting bogged down in performance theater
+
+## Previous abstract
+
+### Beyond simple benchmarks—a practical guide to optimizing code
 
 We know it’s vital that code executed at scale performs well. But how do we know if our performance optimizations actually make it faster? Fortunately, we have powerful tools which help—BenchmarkDotNet is a .NET library for benchmarking optimizations, with many simple examples to help get started.
 
@@ -217,6 +229,7 @@ So, should we try to optimize those away? Well, ideally, yes, but in this specif
 - The allocations are mostly coming from the MSMQ transport which has a diminishing user base. Most users eventually transition away from MSMQ to either SQL Server, RabbitMQ or a cloud transport like Azure Service Bus or Amazon SQS. Our efforts there might lead to allocation reductions only for a very limited segment of users.
 - Another angle could be that we might not be transport experts. We already know that by making iterative gains on this hot path, we will end up with great improvements. But since every activity has to be weighted against building features and all the other activities, it might not be justifiable right now to ramp up knowledge in that area.
 - Finally, our goal is to see what we can do to optimize the pipeline. The pipeline optimizations have great benefits for all users, independent of the transports.
+- So the context matters or in other words our domain knowledge is crucial to make the right tradeoffs
 
 When we look at an individual invocation (called `Behavior`) we see the following picture:
 
