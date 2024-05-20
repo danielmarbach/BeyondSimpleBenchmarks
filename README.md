@@ -217,6 +217,7 @@ So, should we try to optimize those away? Well, ideally, yes, but in this specif
 - The allocations are mostly coming from the MSMQ transport which has a diminishing user base. Most users eventually transition away from MSMQ to either SQL Server, RabbitMQ or a cloud transport like Azure Service Bus or Amazon SQS. Our efforts there might lead to allocation reductions only for a very limited segment of users.
 - Another angle could be that we might not be transport experts. We already know that by making iterative gains on this hot path, we will end up with great improvements. But since every activity has to be weighted against building features and all the other activities, it might not be justifiable right now to ramp up knowledge in that area.
 - Finally, our goal is to see what we can do to optimize the pipeline. The pipeline optimizations have great benefits for all users, independent of the transports.
+- So the context matters or in other words our domain knowledge is crucial to make the right tradeoffs
 
 When we look at an individual invocation (called `Behavior`) we see the following picture:
 
