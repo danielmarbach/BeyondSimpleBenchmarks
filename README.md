@@ -626,3 +626,4 @@ For regression testing it is crucial to have a stable build pipeline to execute 
 - [Sample performance investigation using BenchmarkDotNet and PerfView](https://adamsitnik.com/Sample-Perf-Investigation/)
 - [Profiling .NET Code with PerfView and visualizing it with speedscope.app](https://adamsitnik.com/speedscope/)
 - [Adam Sitnik - .NET Performance Investigation](https://www.youtube.com/watch?v=y4HV5m5GR7o)
+- [A highly technical talk by Stephen Toub and Scott Hanselman](https://youtu.be/TRFfTdzpk-M?si=NyoevV5srhwZbuSH) ([Reasons why to start with Allocation Optimizations first](https://youtu.be/TRFfTdzpk-M?si=NyoevV5srhwZbuSH&t=692))
